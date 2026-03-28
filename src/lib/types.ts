@@ -1,3 +1,5 @@
+// ── Database Row Types ──
+
 export interface Transaction {
   id: number;
   player_id: string;
@@ -26,14 +28,11 @@ export interface AcademicRecord {
   score: number;
   max_score: number;
   notes?: string;
-  
-  // Extended Optional Fields for deep academic tracking
-  exam_name?: string;     // for unit tests e.g. 'U9L1'
-  class_avg?: number;     // class average
-  highest_score?: number; // class highest
-  class_rank?: number;    // student's rank
-  is_retest?: boolean;    // for micro_tests (e.g., F to 75)
-  
+  exam_name?: string;
+  class_avg?: number;
+  highest_score?: number;
+  class_rank?: number;
+  is_retest?: boolean;
   created_at: string;
 }
 
@@ -41,8 +40,8 @@ export interface MonthlySchoolPoint {
   id: string;
   player_id: string;
   month_id: string;      // e.g. '2026-03'
-  total_score: number;   // e.g. 25
-  rank?: number; // Added for the 4-module ranking tiers
+  total_score: number;
+  rank?: number;
   notes?: string;
   created_at: string;
 }
@@ -52,8 +51,11 @@ export interface HabitLog {
   player_id: string;
   log_date: string;
   habit_type: '阅读' | '运动';
+  notes?: string;
   created_at: string;
 }
+
+// ── Computed / Display Types ──
 
 export interface WeekPeriod {
   start: string;
@@ -64,16 +66,43 @@ export interface WeekPeriod {
 
 export interface WeeklyQuestState {
   week: number;
-  period: WeekPeriod;
+  period: { start: string; end: string; startDate: Date; endDate: Date };
   exercise: { earned: number; status: 'pending' | 'completed' };
   reading: { earned: number; status: 'pending' | 'completed' };
+  academic: { earned: number; strikes: number; deductions: { reason: string; amount: number }[] };
 }
 
 export interface AcademicBonusState {
   week: number;
-  period: WeekPeriod;
+  period: { start: string; end: string; startDate: Date; endDate: Date };
   remaining: number;
   deductions: { reason: string; amount: number }[];
+}
+
+export interface RecentLog {
+  id: number;
+  type: string;
+  amount: number;
+  description: string;
+  date: string;
+}
+
+export interface QuestDisplay {
+  id: number;
+  title: string;
+  reward: number;
+  type: string;
+  status: QuestProof['status'];
+  description: string;
+}
+
+export interface PendingProofDisplay {
+  id: number;
+  player: string;
+  questTitle: string;
+  type: string;
+  date: string;
+  reward: number;
 }
 
 export interface PlayerData {
@@ -87,7 +116,16 @@ export interface PlayerData {
   monthlyPoolTotal: number;
   totalUnlocked: number;
   totalCap: number;
-  recentLogs: { id: number; type: string; amount: number; description: string; date: string }[];
+  recentLogs: RecentLog[];
   weeklyQuests: WeeklyQuestState[];
   academicBonus: AcademicBonusState[];
+}
+
+export interface GrowSyncData {
+  playerData: PlayerData;
+  academicRecords: AcademicRecord[];
+  habitLogs: HabitLog[];
+  monthlyPoints: MonthlySchoolPoint[];
+  quests: QuestDisplay[];
+  pendingProofs: PendingProofDisplay[];
 }
