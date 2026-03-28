@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getCurrentMonthInfo } from '@/lib/date-utils';
 import {
@@ -24,18 +24,23 @@ import type {
   AcademicRecord,
   MonthlySchoolPoint,
   HabitLog,
+  WeekPeriod,
 } from '@/lib/types';
 
 export function useGrowSyncData() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<GrowSyncData | null>(null);
+  const [targetDate, setTargetDate] = useState(new Date());
+  const [seasonInfo, setSeasonInfo] = useState<{ monthStr: string; monthId: string; weeks: WeekPeriod[] }>({
+    monthStr: '', monthId: '', weeks: [],
+  });
 
-  const loadData = async () => {
+  const loadData = useCallback(async (date: Date) => {
     setLoading(true);
-    const { monthId, weeks } = getCurrentMonthInfo();
+    const info = getCurrentMonthInfo(date);
+    const { monthId, weeks } = info;
+    setSeasonInfo(info);
 
-    // Query range covers the full season: first Monday to last Sunday
-    // The last week's Sunday may overflow into the next month
     const seasonStart = weeks.length > 0
       ? weeks[0].startDate.toISOString().split('T')[0]
       : `${monthId}-01`;
@@ -77,22 +82,52 @@ export function useGrowSyncData() {
       pendingProofs: formatPendingProofs(proofs),
     });
     setLoading(false);
-  };
+  }, []);
+
+  const goToPrevMonth = useCallback(() => {
+    setTargetDate(prev => {
+      const d = new Date(prev);
+      d.setMonth(d.getMonth() - 1);
+      return d;
+    });
+  }, []);
+
+  const goToNextMonth = useCallback(() => {
+    setTargetDate(prev => {
+      const d = new Date(prev);
+      d.setMonth(d.getMonth() + 1);
+      return d;
+    });
+  }, []);
+
+  const goToCurrentMonth = useCallback(() => {
+    setTargetDate(new Date());
+  }, []);
 
   useEffect(() => {
-    loadData();
+    loadData(targetDate);
+  }, [targetDate, loadData]);
 
+  useEffect(() => {
     const channel = supabase
       .channel('schema-db-changes')
       .on('postgres_changes', { event: '*', schema: 'public' }, () => {
-        loadData();
+        loadData(targetDate);
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [targetDate, loadData]);
 
-  return { data, loading, reloadData: loadData };
+  return {
+    data,
+    loading,
+    seasonInfo,
+    goToPrevMonth,
+    goToNextMonth,
+    goToCurrentMonth,
+    reloadData: () => loadData(targetDate),
+  };
 }

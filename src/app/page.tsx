@@ -1,7 +1,7 @@
 "use client";
 
 import { useGrowSyncData } from "@/hooks/useGrowSyncData";
-import { getCurrentMonthInfo, getCurrentWeekIndex } from "@/lib/date-utils";
+import { getCurrentWeekIndex } from "@/lib/date-utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
@@ -11,9 +11,9 @@ import { AcademicTab } from "@/components/tabs/academic-tab";
 import { AdminTab } from "@/components/tabs/admin-tab";
 
 export default function Home() {
-  const { data, loading } = useGrowSyncData();
-  const { monthStr, weeks } = getCurrentMonthInfo();
-  
+  const { data, loading, seasonInfo, goToPrevMonth, goToNextMonth, goToCurrentMonth } = useGrowSyncData();
+  const { monthStr, weeks } = seasonInfo;
+
   const currentWeekIdx = getCurrentWeekIndex(weeks, new Date());
   const cw = weeks[currentWeekIdx];
   const currentWeekInfo = cw
@@ -32,19 +32,38 @@ export default function Home() {
         <div>
           <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             GrowSync
-            <Badge variant="outline" className="font-normal text-[10px] text-muted-foreground px-1.5 py-0 bg-muted/20">
+          </h1>
+          <div className="flex items-center gap-2 mt-1">
+            <button
+              onClick={goToPrevMonth}
+              className="text-[10px] text-muted-foreground hover:text-foreground px-1 py-0.5 rounded transition-colors focus:outline-none"
+              aria-label="上个月"
+            >
+              ◀
+            </button>
+            <Badge
+              variant="outline"
+              className="font-normal text-[10px] text-muted-foreground px-1.5 py-0 bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors"
+              onClick={goToCurrentMonth}
+            >
               {monthStr}
             </Badge>
-          </h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            当前玩家: {playerData.name}
-          </p>
+            <button
+              onClick={goToNextMonth}
+              className="text-[10px] text-muted-foreground hover:text-foreground px-1 py-0.5 rounded transition-colors focus:outline-none"
+              aria-label="下个月"
+            >
+              ▶
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="text-[10px] text-muted-foreground border border-border/50 bg-muted/10 px-2 py-1 flex items-center gap-1 rounded hover:bg-muted/30 transition-colors focus:outline-none focus:ring-1 focus:ring-primary/50">
-            <span>战利记录</span>
-            <span className="text-[8px] opacity-60">▼</span>
-          </button>
+        <div className="text-right">
+          <p className="text-xs text-muted-foreground">
+            {playerData.name}
+          </p>
+          <p className="text-[10px] text-muted-foreground/60">
+            {weeks.length} 周赛季
+          </p>
         </div>
       </header>
 
@@ -77,4 +96,3 @@ export default function Home() {
     </div>
   );
 }
-
