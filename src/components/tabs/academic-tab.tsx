@@ -88,7 +88,7 @@ export function AcademicTab({
             {filteredRecords.map((record) => {
                const score = Number(record.score);
                const isBelowThreshold = record.subject === '英语' ? score < 90 : score < 95;
-               const isBad = record.is_retest || score < 60 || isBelowThreshold;
+               const isStrike = record.event_type === 'micro_test' && (record.is_retest || score < 60 || isBelowThreshold);
 
                return (
                 <div key={record.id} className="p-4 flex items-center justify-between">
@@ -96,12 +96,12 @@ export function AcademicTab({
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{record.exam_name || '日常练测小卷'}</span>
                       {record.event_type === 'major_exam' && <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 bg-primary/20 text-primary hover:bg-primary/30">大考</Badge>}
-                      {isBad && <Badge variant="destructive" className="text-[9px] px-1 py-0 h-4">Strike</Badge>}
+                      {isStrike && <Badge variant="destructive" className="text-[9px] px-1 py-0 h-4">Strike</Badge>}
                     </div>
                     <div className="text-xs text-muted-foreground mt-1.5">{record.event_date}</div>
                   </div>
                   <div className="text-right flex flex-col items-end">
-                    <div className={`text-lg font-mono font-semibold ${isBad ? 'text-destructive' : 'text-foreground'}`}>
+                    <div className={`text-lg font-mono font-semibold ${isStrike ? 'text-destructive' : 'text-foreground'}`}>
                       {record.score} <span className="text-[10px] text-muted-foreground font-sans font-normal">/ {record.max_score}</span>
                     </div>
                     {record.class_avg && (

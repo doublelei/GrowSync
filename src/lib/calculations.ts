@@ -42,9 +42,9 @@ export function calculateWeeklyQuests(
     const exerciseEarned = weekendExercise ? 50 : 0;
     const readingEarned = weekendReading ? 50 : 0;
 
-    // Academic strike system
+    // Academic strike system (only micro_tests count — major exams excluded)
     const academicsThisWeek = academicsWithDate.filter(
-      a => a.dateObj >= w.startDate && a.dateObj <= endOfDay,
+      a => a.dateObj >= w.startDate && a.dateObj <= endOfDay && a.event_type === 'micro_test',
     );
 
     let strikes = 0;
