@@ -514,8 +514,8 @@ export default function RecordsPage() {
           </CardContent>
         </Card>
 
-        {/* ── Habit Heatmap ── */}
-        <HabitHeatmap habitLogs={habitLogs} />
+        {/* ── Habit Weekly Rings ── */}
+        <HabitWeeklyRings habitLogs={habitLogs} />
 
         {/* ── Monthly Points ── */}
         <Card className="mb-6">
@@ -561,55 +561,107 @@ export default function RecordsPage() {
   );
 }
 
-// ── Habit Heatmap (GitHub-style contribution graph) ──
+// ── Weekly Habit Rings ──
+// Each week = one circle. Left half = 运动, right half = 阅读.
 import type { HabitLog } from "@/lib/types";
 
-function HabitHeatmap({ habitLogs }: { habitLogs: HabitLog[] }) {
-  const activityMap = useMemo(() => {
-    const map = new Map<string, Set<string>>();
-    for (const log of habitLogs) {
-      if (!map.has(log.log_date)) map.set(log.log_date, new Set());
-      map.get(log.log_date)!.add(log.habit_type);
-    }
-    return map;
+const RING_SIZE = 32;
+const RING_STROKE = 4;
+const EXERCISE_COLOR = "oklch(0.85 0.25 145)"; // cyber green
+const READING_COLOR = "oklch(0.8 0.2 190)";    // teal
+const EMPTY_COLOR = "oklch(0.25 0.05 280)";    // dark muted
+
+function HabitRing({ exercise, reading, label, isFuture }: {
+  exercise: boolean;
+  reading: boolean;
+  label: string;
+  isFuture: boolean;
+}) {
+  const r = (RING_SIZE - RING_STROKE) / 2;
+  const cx = RING_SIZE / 2;
+  const cy = RING_SIZE / 2;
+
+  // Left semicircle (运动): arc from bottom to top on the left side
+  // Right semicircle (阅读): arc from top to bottom on the right side
+  const leftArc = `M ${cx},${cy + r} A ${r},${r} 0 0,1 ${cx},${cy - r}`;
+  const rightArc = `M ${cx},${cy - r} A ${r},${r} 0 0,1 ${cx},${cy + r}`;
+
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <svg width={RING_SIZE} height={RING_SIZE} className={isFuture ? "opacity-20" : ""}>
+        <path
+          d={leftArc}
+          fill="none"
+          stroke={exercise ? EXERCISE_COLOR : EMPTY_COLOR}
+          strokeWidth={RING_STROKE}
+          strokeLinecap="round"
+        />
+        <path
+          d={rightArc}
+          fill="none"
+          stroke={reading ? READING_COLOR : EMPTY_COLOR}
+          strokeWidth={RING_STROKE}
+          strokeLinecap="round"
+        />
+      </svg>
+      <span className="text-[8px] text-muted-foreground/50 leading-none">{label}</span>
+    </div>
+  );
+}
+
+function HabitWeeklyRings({ habitLogs }: { habitLogs: HabitLog[] }) {
+  // Build set of dates per habit type
+  const exerciseDates = useMemo(() => {
+    const s = new Set<string>();
+    for (const l of habitLogs) if (l.habit_type === "运动") s.add(l.log_date);
+    return s;
   }, [habitLogs]);
 
-  const { weeks, monthLabels } = useMemo(() => {
+  const readingDates = useMemo(() => {
+    const s = new Set<string>();
+    for (const l of habitLogs) if (l.habit_type === "阅读") s.add(l.log_date);
+    return s;
+  }, [habitLogs]);
+
+  // Generate last 16 weeks (Mon-Sun each)
+  const weeks = useMemo(() => {
     const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
     const totalWeeks = 16;
-    const totalDays = totalWeeks * 7;
 
-    const endDay = new Date(today);
-    endDay.setDate(endDay.getDate() + (6 - endDay.getDay()));
+    // Find current week's Monday
+    const dayOfWeek = today.getDay(); // 0=Sun
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const thisMon = new Date(today);
+    thisMon.setDate(today.getDate() + mondayOffset);
 
-    const startDay = new Date(endDay);
-    startDay.setDate(startDay.getDate() - totalDays + 1);
+    const result: { monDate: Date; monStr: string; sunStr: string; label: string; isFuture: boolean; dates: string[] }[] = [];
 
-    const weeks: string[][] = [];
-    const monthLabels: { label: string; col: number }[] = [];
-    let lastMonth = -1;
+    for (let w = totalWeeks - 1; w >= 0; w--) {
+      const mon = new Date(thisMon);
+      mon.setDate(thisMon.getDate() - w * 7);
+      const sun = new Date(mon);
+      sun.setDate(mon.getDate() + 6);
 
-    for (let w = 0; w < totalWeeks; w++) {
-      const week: string[] = [];
+      const monStr = mon.toISOString().slice(0, 10);
+      const sunStr = sun.toISOString().slice(0, 10);
+
+      // Collect all dates in this week
+      const dates: string[] = [];
       for (let d = 0; d < 7; d++) {
-        const date = new Date(startDay);
-        date.setDate(startDay.getDate() + w * 7 + d);
-        const dateStr = date.toISOString().slice(0, 10);
-        week.push(dateStr);
-
-        if (d === 0 && date.getMonth() !== lastMonth) {
-          lastMonth = date.getMonth();
-          monthLabels.push({ label: `${date.getMonth() + 1}月`, col: w });
-        }
+        const date = new Date(mon);
+        date.setDate(mon.getDate() + d);
+        dates.push(date.toISOString().slice(0, 10));
       }
-      weeks.push(week);
-    }
-    return { weeks, monthLabels };
-  }, []);
 
-  const cellSize = 12;
-  const gap = 2;
-  const dayLabels = ["一", "", "三", "", "五", "", "日"];
+      const label = `${mon.getMonth() + 1}/${mon.getDate()}`;
+      const isFuture = monStr > todayStr;
+
+      result.push({ monDate: mon, monStr, sunStr, label, isFuture, dates });
+    }
+
+    return result;
+  }, []);
 
   return (
     <Card>
@@ -617,64 +669,37 @@ function HabitHeatmap({ habitLogs }: { habitLogs: HabitLog[] }) {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-sm">习惯打卡</CardTitle>
-            <CardDescription className="text-[10px]">{habitLogs.length} 次打卡</CardDescription>
+            <CardDescription className="text-[10px]">近 16 周</CardDescription>
           </div>
-          <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
-            <span>少</span>
-            <div className="flex gap-0.5">
-              <div className="size-2.5 rounded-sm bg-muted/30" />
-              <div className="size-2.5 rounded-sm bg-[oklch(0.85_0.25_145/0.3)]" />
-              <div className="size-2.5 rounded-sm bg-[oklch(0.85_0.25_145/0.7)]" />
+          <div className="flex items-center gap-3 text-[9px] text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <div className="size-2 rounded-full" style={{ background: EXERCISE_COLOR }} />
+              <span>运动</span>
             </div>
-            <span>多</span>
+            <div className="flex items-center gap-1">
+              <div className="size-2 rounded-full" style={{ background: READING_COLOR }} />
+              <span>阅读</span>
+            </div>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <div className="inline-flex gap-0.5">
-            <div className="flex flex-col mr-1" style={{ gap }}>
-              {dayLabels.map((label, i) => (
-                <div key={i} className="text-[9px] text-muted-foreground/60 flex items-center justify-end" style={{ height: cellSize, width: 14 }}>
-                  {label}
-                </div>
-              ))}
-            </div>
-            <div>
-              <div className="flex relative" style={{ height: 14, marginBottom: 2 }}>
-                {monthLabels.map((ml, i) => (
-                  <span key={i} className="text-[9px] text-muted-foreground/60 absolute" style={{ left: ml.col * (cellSize + gap) }}>
-                    {ml.label}
-                  </span>
-                ))}
-              </div>
-              <div className="flex" style={{ gap }}>
-                {weeks.map((week, wi) => (
-                  <div key={wi} className="flex flex-col" style={{ gap }}>
-                    {week.map((dateStr, di) => {
-                      const types = activityMap.get(dateStr);
-                      const level = types ? types.size : 0;
-                      const isFuture = dateStr > new Date().toISOString().slice(0, 10);
-                      const title = types ? `${dateStr}: ${Array.from(types).join(" + ")}` : dateStr;
+        <div className="overflow-x-auto pb-1">
+          <div className="inline-flex gap-2">
+            {weeks.map((week) => {
+              const hasExercise = week.dates.some((d) => exerciseDates.has(d));
+              const hasReading = week.dates.some((d) => readingDates.has(d));
 
-                      return (
-                        <div
-                          key={di}
-                          title={title}
-                          className={`rounded-sm ${
-                            isFuture ? "bg-transparent"
-                              : level === 0 ? "bg-muted/20"
-                              : level === 1 ? "bg-[oklch(0.85_0.25_145/0.3)]"
-                              : "bg-[oklch(0.85_0.25_145/0.7)]"
-                          }`}
-                          style={{ width: cellSize, height: cellSize }}
-                        />
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
+              return (
+                <HabitRing
+                  key={week.monStr}
+                  exercise={hasExercise}
+                  reading={hasReading}
+                  label={week.label}
+                  isFuture={week.isFuture}
+                />
+              );
+            })}
           </div>
         </div>
       </CardContent>
