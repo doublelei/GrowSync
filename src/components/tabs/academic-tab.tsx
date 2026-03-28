@@ -3,29 +3,31 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import type { AcademicRecord, HabitLog, MonthlySchoolPoint, WeeklyQuestState } from "@/lib/types";
 
-export function AcademicTab({ 
-  records = [], 
-  habitLogs = [], 
+export function AcademicTab({
+  records = [],
+  habitLogs = [],
   monthlyPoints = [],
-  weeklyQuests = [] // New prop for HUD
-}: { 
-  records?: any[], 
-  habitLogs?: any[], 
-  monthlyPoints?: any[],
-  weeklyQuests?: any[]
+  weeklyQuests = []
+}: {
+  records?: AcademicRecord[];
+  habitLogs?: HabitLog[];
+  monthlyPoints?: MonthlySchoolPoint[];
+  weeklyQuests?: WeeklyQuestState[];
 }) {
   const [subject, setSubject] = useState("英语");
-  
-  // Find current week (latest one in the array for now, or match by date)
+
   const currentWeek = weeklyQuests[weeklyQuests.length - 1];
-  
+
   const subjects = ["英语", "数学", "语文", "理综"];
-  const filteredRecords = records.filter(r => r.subject === subject).sort((a,b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
+  const filteredRecords = records
+    .filter(r => r.subject === subject)
+    .sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
 
   return (
     <div className="space-y-6">
-      {/* Weekly HUD - Dashboard for the current week */}
+      {/* Weekly HUD */}
       {currentWeek && (
         <div className="grid grid-cols-3 gap-3">
           <Card className="shadow-none border-border/50 bg-primary/5">
@@ -39,20 +41,24 @@ export function AcademicTab({
           </Card>
           <Card className="shadow-none border-border/50 bg-primary/5">
             <CardContent className="p-3 text-center">
-              <div className="text-[10px] text-muted-foreground uppercase mb-1">运动输出</div>
-              <div className="text-xl font-mono font-bold text-foreground">
-                {currentWeek.exercise.earned / 10}<span className="text-[10px] font-normal text-muted-foreground">/5d</span>
+              <div className="text-[10px] text-muted-foreground uppercase mb-1">周末运动</div>
+              <div className={`text-xl font-mono font-bold ${currentWeek.exercise.status === 'completed' ? 'text-primary' : 'text-muted-foreground'}`}>
+                {currentWeek.exercise.status === 'completed' ? '✓' : '—'}
               </div>
-              <div className="text-[9px] text-muted-foreground mt-0.5">&yen;{currentWeek.exercise.earned} 锁定</div>
+              <div className="text-[9px] text-muted-foreground mt-0.5">
+                {currentWeek.exercise.earned > 0 ? '¥50 已锁定' : '待完成'}
+              </div>
             </CardContent>
           </Card>
           <Card className="shadow-none border-border/50 bg-primary/5">
             <CardContent className="p-3 text-center">
-              <div className="text-[10px] text-muted-foreground uppercase mb-1">阅读核验</div>
-              <div className="text-xl font-mono font-bold text-foreground">
-                {currentWeek.reading.earned / 10}<span className="text-[10px] font-normal text-muted-foreground">/5d</span>
+              <div className="text-[10px] text-muted-foreground uppercase mb-1">周末阅读</div>
+              <div className={`text-xl font-mono font-bold ${currentWeek.reading.status === 'completed' ? 'text-primary' : 'text-muted-foreground'}`}>
+                {currentWeek.reading.status === 'completed' ? '✓' : '—'}
               </div>
-              <div className="text-[9px] text-muted-foreground mt-0.5">&yen;{currentWeek.reading.earned} 锁定</div>
+              <div className="text-[9px] text-muted-foreground mt-0.5">
+                {currentWeek.reading.earned > 0 ? '¥50 已锁定' : '待完成'}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -60,8 +66,8 @@ export function AcademicTab({
 
       <div className="flex gap-2 p-1 bg-muted/30 rounded-md overflow-x-auto">
         {subjects.map(s => (
-          <button 
-            key={s} 
+          <button
+            key={s}
             onClick={() => setSubject(s)}
             className={`px-4 py-1.5 text-xs font-medium rounded-sm whitespace-nowrap transition-colors ${subject === s ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
           >
@@ -77,11 +83,11 @@ export function AcademicTab({
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-border/50">
-            {filteredRecords.map((record: any) => {
+            {filteredRecords.map((record) => {
                const score = Number(record.score);
                const isBelowThreshold = record.subject === '英语' ? score < 90 : score < 95;
                const isBad = record.is_retest || score < 60 || isBelowThreshold;
-               
+
                return (
                 <div key={record.id} className="p-4 flex items-center justify-between">
                   <div>
@@ -97,7 +103,7 @@ export function AcademicTab({
                       {record.score} <span className="text-[10px] text-muted-foreground font-sans font-normal">/ {record.max_score}</span>
                     </div>
                     {record.class_avg && (
-                      <div className="text-[10px] text-muted-foreground mt-0.5">班均: {record.class_avg} （最高: {record.highest_score || '-'}）</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">班均: {record.class_avg} (最高: {record.highest_score || '-'})</div>
                     )}
                   </div>
                 </div>
@@ -118,7 +124,7 @@ export function AcademicTab({
           </CardHeader>
           <CardContent className="p-0">
              <div className="divide-y divide-border/50 max-h-48 overflow-y-auto">
-               {habitLogs.slice(0, 10).map((h: any) => (
+               {habitLogs.slice(0, 10).map((h) => (
                  <div key={h.id} className="p-3 flex justify-between items-center text-xs">
                    <span className="font-mono text-muted-foreground">{h.log_date}</span>
                    <Badge variant="outline" className="text-[10px] py-0 h-4 font-normal">{h.habit_type}</Badge>
@@ -136,7 +142,7 @@ export function AcademicTab({
           </CardHeader>
           <CardContent className="p-0">
              <div className="divide-y divide-border/50 max-h-48 overflow-y-auto">
-               {monthlyPoints.map((p: any) => (
+               {monthlyPoints.map((p) => (
                  <div key={p.id} className="p-3 flex flex-col gap-1 text-xs">
                    <div className="flex justify-between items-center">
                      <span className="font-medium font-mono border border-border/50 bg-muted/20 px-1 py-0.5 rounded-sm">{p.month_id}</span>

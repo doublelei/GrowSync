@@ -1,7 +1,7 @@
 "use client";
 
 import { useGrowSyncData } from "@/hooks/useGrowSyncData";
-import { getCurrentMonthInfo } from "@/lib/date-utils";
+import { getCurrentMonthInfo, getCurrentWeekIndex } from "@/lib/date-utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
@@ -14,8 +14,11 @@ export default function Home() {
   const { data, loading } = useGrowSyncData();
   const { monthStr, weeks } = getCurrentMonthInfo();
   
-  // Dynamic current week detection for MVP (Assume week 1 if no exact match found)
-  const currentWeekInfo = weeks.length > 0 ? { start: weeks[0].start, end: weeks[0].end, week: 1 } : { start: '', end: '', week: 1 };
+  const currentWeekIdx = getCurrentWeekIndex(weeks, new Date());
+  const cw = weeks[currentWeekIdx];
+  const currentWeekInfo = cw
+    ? { start: cw.start, end: cw.end, week: currentWeekIdx + 1 }
+    : { start: '', end: '', week: 1 };
 
   if (loading || !data) {
     return <div className="h-[100dvh] bg-background flex flex-col items-center justify-center font-mono text-xs uppercase tracking-widest text-muted-foreground animate-pulse">Initializing Terminal...</div>;

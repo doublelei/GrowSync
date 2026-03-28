@@ -2,8 +2,9 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import type { QuestDisplay } from "@/lib/types";
 
-export function QuestsTab({ quests, currentWeek }: { quests: any[], currentWeek: { start: string, end: string, week: number } }) {
+export function QuestsTab({ quests, currentWeek }: { quests: QuestDisplay[], currentWeek: { start: string, end: string, week: number } }) {
   return (
     <div className="space-y-4">
       <div className="mb-4 p-3 bg-muted/10 border border-border/50 rounded-md flex justify-between items-center">
@@ -14,7 +15,7 @@ export function QuestsTab({ quests, currentWeek }: { quests: any[], currentWeek:
         <span className="text-xs font-mono text-primary font-bold">第 {currentWeek.week} 周 ({currentWeek.start} - {currentWeek.end})</span>
       </div>
 
-      {quests.map((quest: any) => (
+      {quests.map((quest) => (
         <Card key={quest.id} className="shadow-none border-border/50 relative overflow-hidden">
           {quest.status === 'under_review' && (
             <div className="absolute top-0 right-0 w-1.5 h-full bg-orange-500/50"></div>

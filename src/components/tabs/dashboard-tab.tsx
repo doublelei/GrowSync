@@ -4,7 +4,7 @@ import { useState } from "react";
 import { CircularProgress } from "@/components/circular-progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PlayerData, WeekPeriod } from "@/lib/types";
+import type { PlayerData, WeeklyQuestState, AcademicBonusState } from "@/lib/types";
 
 export function DashboardTab({ playerData }: { playerData: PlayerData }) {
   const [showWeekly, setShowWeekly] = useState(false);
@@ -41,7 +41,7 @@ export function DashboardTab({ playerData }: { playerData: PlayerData }) {
           {showWeekly && (
             <CardContent className="p-4 pt-0">
               <div className="space-y-2 mt-2">
-                {playerData.weeklyQuests.map((w: any, idx: number) => (
+                {playerData.weeklyQuests.map((w: WeeklyQuestState, idx: number) => (
                   <div key={idx} className="flex justify-between items-center bg-background/40 p-2.5 rounded-md border border-border/30">
                     <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-medium text-foreground/80">第 {w.week} 周</span>
@@ -75,7 +75,7 @@ export function DashboardTab({ playerData }: { playerData: PlayerData }) {
           {showAcademic && (
             <CardContent className="p-4 pt-0">
               <div className="space-y-2 mt-2">
-                {playerData.academicBonus.map((w: any, idx: number) => (
+                {playerData.academicBonus.map((w: AcademicBonusState, idx: number) => (
                   <div key={idx} className="flex justify-between items-center bg-background/40 p-2.5 rounded-md border border-border/30">
                     <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-medium text-foreground/80">第 {w.week} 周</span>
