@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronDown } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -22,7 +22,6 @@ import {
   STRIKE_THRESHOLD_DEFAULT,
 } from "@/lib/constants";
 import type {
-  TimeRange,
   ExamTypeFilter,
   AcademicRecord,
 } from "@/lib/types";
@@ -35,13 +34,16 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 
-// ── Chart color mapping ──
-const CHART_COLORS: Record<string, string> = {
-  "英语": "var(--chart-1)",
-  "数学": "var(--chart-2)",
-  "语文": "var(--chart-3)",
-  "理综": "var(--chart-4)",
+// ── Subject color mapping (shared between chart and badges) ──
+const SUBJECT_COLORS: Record<string, { chart: string; bg: string; text: string }> = {
+  "英语": { chart: "var(--chart-1)", bg: "bg-[oklch(0.85_0.25_145/0.15)]", text: "text-[oklch(0.85_0.25_145)]" },
+  "数学": { chart: "var(--chart-2)", bg: "bg-[oklch(0.6_0.28_290/0.15)]", text: "text-[oklch(0.75_0.2_290)]" },
+  "语文": { chart: "var(--chart-3)", bg: "bg-[oklch(0.65_0.25_25/0.15)]", text: "text-[oklch(0.75_0.2_25)]" },
+  "理综": { chart: "var(--chart-4)", bg: "bg-[oklch(0.8_0.2_190/0.15)]", text: "text-[oklch(0.8_0.2_190)]" },
 };
+const CHART_COLORS = Object.fromEntries(
+  Object.entries(SUBJECT_COLORS).map(([k, v]) => [k, v.chart]),
+);
 
 // ── Helpers ──
 function isStrike(r: AcademicRecord): boolean {
@@ -61,13 +63,53 @@ function monthLabel(dateStr: string): string {
   return dateStr.slice(0, 7);
 }
 
-function threeMonthsAgo(): string {
-  const d = new Date();
-  d.setMonth(d.getMonth() - 3);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+// ── Semester utilities ──
+// 上学期: Sep 1 ~ Jan 31 (next year)
+// 下学期: Feb 1 ~ Jun 30
+interface Semester {
+  id: string;       // e.g. "2025-2026-1" or "2025-2026-2"
+  label: string;    // e.g. "2025-2026 上学期"
+  start: string;    // "YYYY-MM-DD"
+  end: string;      // "YYYY-MM-DD"
+}
+
+function getSemesterForDate(dateStr: string): Semester {
+  const [y, m] = dateStr.split("-").map(Number);
+  if (m >= 9) {
+    // Fall semester: this year Sep ~ next year Jan
+    return {
+      id: `${y}-${y + 1}-1`,
+      label: `${y}-${y + 1} 上学期`,
+      start: `${y}-09-01`,
+      end: `${y + 1}-01-31`,
+    };
+  } else if (m <= 1) {
+    // Still fall semester of previous year
+    return {
+      id: `${y - 1}-${y}-1`,
+      label: `${y - 1}-${y} 上学期`,
+      start: `${y - 1}-09-01`,
+      end: `${y}-01-31`,
+    };
+  } else {
+    // Spring semester: Feb ~ Jun
+    return {
+      id: `${y - 1}-${y}-2`,
+      label: `${y - 1}-${y} 下学期`,
+      start: `${y}-02-01`,
+      end: `${y}-06-30`,
+    };
+  }
+}
+
+function getAvailableSemesters(records: AcademicRecord[]): Semester[] {
+  const seen = new Map<string, Semester>();
+  for (const r of records) {
+    const sem = getSemesterForDate(r.event_date);
+    if (!seen.has(sem.id)) seen.set(sem.id, sem);
+  }
+  // Sort newest first
+  return Array.from(seen.values()).sort((a, b) => b.id.localeCompare(a.id));
 }
 
 // ── Filter pill component ──
@@ -111,10 +153,28 @@ export default function RecordsPage() {
 
   // ── Filter state ──
   const [selectedSubject, setSelectedSubject] = useState<string>("全部");
-  const [timeRange, setTimeRange] = useState<TimeRange>("all");
-  const [customStart, setCustomStart] = useState("");
-  const [customEnd, setCustomEnd] = useState("");
+  const [selectedSemester, setSelectedSemester] = useState<string>("current");
   const [examType, setExamType] = useState<ExamTypeFilter>("all");
+
+  // ── Available semesters from data ──
+  const semesters = useMemo(
+    () => getAvailableSemesters(academicRecords),
+    [academicRecords],
+  );
+
+  // Default "current" resolves to the newest semester (or today's)
+  const currentSemester = useMemo(() => {
+    if (semesters.length > 0) return semesters[0];
+    const today = new Date().toISOString().slice(0, 10);
+    return getSemesterForDate(today);
+  }, [semesters]);
+
+  const activeSemester =
+    selectedSemester === "all"
+      ? null
+      : selectedSemester === "current"
+        ? currentSemester
+        : semesters.find((s) => s.id === selectedSemester) ?? currentSemester;
 
   // ── Filtered academic records ──
   const filteredRecords = useMemo(() => {
@@ -125,17 +185,11 @@ export default function RecordsPage() {
       records = records.filter((r) => r.subject === selectedSubject);
     }
 
-    // Time range filter
-    if (timeRange === "recent3m") {
-      const cutoff = threeMonthsAgo();
-      records = records.filter((r) => r.event_date >= cutoff);
-    } else if (timeRange === "custom" && (customStart || customEnd)) {
-      if (customStart) {
-        records = records.filter((r) => r.event_date >= customStart);
-      }
-      if (customEnd) {
-        records = records.filter((r) => r.event_date <= customEnd);
-      }
+    // Semester filter
+    if (activeSemester) {
+      records = records.filter(
+        (r) => r.event_date >= activeSemester.start && r.event_date <= activeSemester.end,
+      );
     }
 
     // Exam type filter
@@ -143,18 +197,18 @@ export default function RecordsPage() {
       records = records.filter((r) => r.event_type === "micro_test");
     } else if (examType === "major_exam") {
       records = records.filter(
-        (r) => r.event_type === "major_exam" || r.event_type === "unit_exam"
+        (r) => r.event_type === "major_exam" || r.event_type === "unit_exam",
       );
     }
 
     // Sort descending by date for the list
     records.sort(
       (a, b) =>
-        new Date(b.event_date).getTime() - new Date(a.event_date).getTime()
+        new Date(b.event_date).getTime() - new Date(a.event_date).getTime(),
     );
 
     return records;
-  }, [academicRecords, selectedSubject, timeRange, customStart, customEnd, examType]);
+  }, [academicRecords, selectedSubject, activeSemester, examType]);
 
   // ── Chart data (sorted ascending) ──
   const chartData = useMemo(() => {
@@ -184,6 +238,34 @@ export default function RecordsPage() {
     return Array.from(byDate.values());
   }, [filteredRecords, selectedSubject]);
 
+  // ── Records grouped by month (for collapsible view) ──
+  const recordsByMonth = useMemo(() => {
+    const groups: { month: string; records: AcademicRecord[] }[] = [];
+    const map = new Map<string, AcademicRecord[]>();
+    for (const r of filteredRecords) {
+      const m = r.event_date.slice(0, 7);
+      if (!map.has(m)) map.set(m, []);
+      map.get(m)!.push(r);
+    }
+    for (const [month, records] of map) {
+      groups.push({ month, records });
+    }
+    return groups;
+  }, [filteredRecords]);
+
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(() => new Set());
+  const toggleMonth = (month: string) => {
+    setExpandedMonths((prev) => {
+      const next = new Set(prev);
+      if (next.has(month)) next.delete(month);
+      else next.add(month);
+      return next;
+    });
+  };
+
+  // Auto-expand the first (newest) month
+  const firstMonth = recordsByMonth[0]?.month;
+
   // ── Loading state ──
   if (isLoading) {
     return (
@@ -205,9 +287,14 @@ export default function RecordsPage() {
             学业档案
           </h1>
         </div>
-        <Badge variant="secondary" className="font-mono text-[10px]">
-          {filteredRecords.length} 条记录
-        </Badge>
+        <div className="flex items-center gap-2">
+          {activeSemester && (
+            <span className="text-[10px] text-muted-foreground">{activeSemester.label}</span>
+          )}
+          <Badge variant="secondary" className="font-mono text-[10px]">
+            {filteredRecords.length} 条
+          </Badge>
+        </div>
       </header>
 
       <div className="flex flex-col gap-4 p-4">
@@ -230,42 +317,30 @@ export default function RecordsPage() {
             ))}
           </div>
 
-          {/* Time range */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <SegmentedControl>
+          {/* Semester selector */}
+          <div className="flex items-center gap-1 flex-wrap">
+            <Pill
+              label="全部学期"
+              active={selectedSemester === "all"}
+              onClick={() => setSelectedSemester("all")}
+            />
+            {semesters.map((sem) => (
               <Pill
-                label="全部"
-                active={timeRange === "all"}
-                onClick={() => setTimeRange("all")}
+                key={sem.id}
+                label={sem.label}
+                active={
+                  selectedSemester === sem.id ||
+                  (selectedSemester === "current" && sem.id === currentSemester.id)
+                }
+                onClick={() => setSelectedSemester(sem.id)}
               />
+            ))}
+            {semesters.length === 0 && (
               <Pill
-                label="近三月"
-                active={timeRange === "recent3m"}
-                onClick={() => setTimeRange("recent3m")}
+                label={currentSemester.label}
+                active={true}
+                onClick={() => {}}
               />
-              <Pill
-                label="自定义"
-                active={timeRange === "custom"}
-                onClick={() => setTimeRange("custom")}
-              />
-            </SegmentedControl>
-
-            {timeRange === "custom" && (
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  value={customStart}
-                  onChange={(e) => setCustomStart(e.target.value)}
-                  className="bg-muted/30 border border-border rounded-md px-2 py-1 text-xs text-foreground"
-                />
-                <span className="text-muted-foreground text-xs">-</span>
-                <input
-                  type="date"
-                  value={customEnd}
-                  onChange={(e) => setCustomEnd(e.target.value)}
-                  className="bg-muted/30 border border-border rounded-md px-2 py-1 text-xs text-foreground"
-                />
-              </div>
             )}
           </div>
 
@@ -361,169 +436,248 @@ export default function RecordsPage() {
           </Card>
         )}
 
-        {/* ── Records List ── */}
+        {/* ── Records List (grouped by month, collapsible) ── */}
         <Card>
           <CardHeader>
             <CardTitle className="text-sm">考试记录</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            {filteredRecords.length === 0 ? (
+            {recordsByMonth.length === 0 ? (
               <div className="px-4 pb-4 text-center text-muted-foreground text-xs py-8">
                 暂无匹配记录
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {filteredRecords.map((r) => (
-                  <div
-                    key={r.id}
-                    className="px-4 py-3 flex items-start justify-between gap-2"
-                  >
-                    <div className="flex flex-col gap-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium truncate">
-                          {r.exam_name || "日常练测小卷"}
-                        </span>
-                        <Badge variant="secondary" className="text-[10px]">
-                          {r.subject}
-                        </Badge>
-                        {(r.event_type === "major_exam" ||
-                          r.event_type === "unit_exam") && (
-                          <Badge variant="outline" className="text-[10px]">
-                            大考
-                          </Badge>
-                        )}
-                        {isStrike(r) && (
-                          <Badge variant="destructive" className="text-[10px]">
-                            Strike
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                        <span>{r.event_date}</span>
-                        <span className="opacity-50">|</span>
-                        <span>{monthLabel(r.event_date)}</span>
-                        {r.class_avg != null && (
-                          <>
-                            <span className="opacity-50">|</span>
-                            <span>
-                              班均{" "}
-                              <span className="font-mono">{r.class_avg}</span>
-                            </span>
-                          </>
-                        )}
-                        {r.highest_score != null && (
-                          <>
-                            <span className="opacity-50">|</span>
-                            <span>
-                              最高{" "}
-                              <span className="font-mono">
-                                {r.highest_score}
-                              </span>
-                            </span>
-                          </>
-                        )}
-                        {r.class_rank != null && (
-                          <>
-                            <span className="opacity-50">|</span>
-                            <span>
-                              排名{" "}
-                              <span className="font-mono">{r.class_rank}</span>
-                            </span>
-                          </>
-                        )}
-                      </div>
+                {recordsByMonth.map(({ month, records: monthRecords }) => {
+                  const isExpanded = expandedMonths.has(month) || month === firstMonth;
+                  const avgScore = Math.round(
+                    monthRecords.reduce((s, r) => s + (r.score / r.max_score) * 100, 0) / monthRecords.length,
+                  );
+                  const strikes = monthRecords.filter(isStrike).length;
+
+                  return (
+                    <div key={month}>
+                      <button
+                        onClick={() => toggleMonth(month)}
+                        className="w-full px-4 py-2.5 flex items-center justify-between bg-muted/5 hover:bg-muted/10 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold font-mono">{month}</span>
+                          <span className="text-[10px] text-muted-foreground">{monthRecords.length} 条</span>
+                          <span className="text-[10px] text-muted-foreground">均分 {avgScore}%</span>
+                          {strikes > 0 && (
+                            <span className="text-[10px] text-destructive">{strikes} strike</span>
+                          )}
+                        </div>
+                        <ChevronDown className={`size-3.5 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                      </button>
+                      {isExpanded && (
+                        <div className="divide-y divide-border/50">
+                          {monthRecords.map((r) => {
+                            const colors = SUBJECT_COLORS[r.subject];
+                            return (
+                              <div
+                                key={r.id}
+                                className="px-4 py-2.5 flex items-center justify-between gap-2"
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className={`inline-flex items-center rounded-sm px-1.5 py-0.5 text-[10px] font-medium ${colors ? `${colors.bg} ${colors.text}` : "bg-muted text-muted-foreground"}`}>
+                                    {r.subject}
+                                  </span>
+                                  <span className="text-xs truncate">
+                                    {r.exam_name || "小测"}
+                                  </span>
+                                  {(r.event_type === "major_exam" || r.event_type === "unit_exam") && (
+                                    <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">大考</Badge>
+                                  )}
+                                  {isStrike(r) && (
+                                    <Badge variant="destructive" className="text-[9px] px-1 py-0 h-4">Strike</Badge>
+                                  )}
+                                  <span className="text-[10px] text-muted-foreground/60">{r.event_date.slice(5)}</span>
+                                </div>
+                                <div className="shrink-0 flex items-baseline gap-0.5">
+                                  <span className={`font-mono text-sm font-semibold ${isStrike(r) ? "text-destructive" : "text-foreground"}`}>
+                                    {r.score}
+                                  </span>
+                                  <span className="text-muted-foreground text-[10px]">/{r.max_score}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                    <div className="text-right shrink-0">
-                      <span className="font-mono text-sm font-semibold">
-                        {r.score}
-                      </span>
-                      <span className="text-muted-foreground text-[10px]">
-                        /{r.max_score}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* ── Bottom Section: Habit Logs + Monthly Points ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6">
-          {/* Habit Logs */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">习惯打卡</CardTitle>
-              <CardDescription className="text-[10px]">
-                {habitLogs.length} 条记录
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="max-h-64 overflow-y-auto divide-y divide-border">
-                {habitLogs.length === 0 ? (
-                  <div className="px-4 py-6 text-center text-muted-foreground text-xs">
-                    暂无记录
-                  </div>
-                ) : (
-                  habitLogs.map((log) => (
-                    <div
-                      key={log.id}
-                      className="px-4 py-2.5 flex items-center justify-between"
-                    >
-                      <span className="text-xs text-muted-foreground font-mono">
-                        {log.log_date}
-                      </span>
-                      <Badge variant="secondary" className="text-[10px]">
-                        {log.habit_type}
-                      </Badge>
-                    </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
+        {/* ── Habit Heatmap ── */}
+        <HabitHeatmap habitLogs={habitLogs} />
 
-          {/* Monthly Points */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">月度积分</CardTitle>
-              <CardDescription className="text-[10px]">
-                {monthlyPoints.length} 个月
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="max-h-64 overflow-y-auto divide-y divide-border">
-                {monthlyPoints.length === 0 ? (
-                  <div className="px-4 py-6 text-center text-muted-foreground text-xs">
-                    暂无记录
-                  </div>
-                ) : (
-                  monthlyPoints.map((mp) => (
-                    <div
-                      key={mp.id}
-                      className="px-4 py-2.5 flex items-center justify-between"
-                    >
-                      <span className="text-xs text-muted-foreground font-mono">
-                        {mp.month_id}
+        {/* ── Monthly Points ── */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-sm">月度积分</CardTitle>
+            <CardDescription className="text-[10px]">
+              {monthlyPoints.length} 个月
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="max-h-64 overflow-y-auto divide-y divide-border">
+              {monthlyPoints.length === 0 ? (
+                <div className="px-4 py-6 text-center text-muted-foreground text-xs">
+                  暂无记录
+                </div>
+              ) : (
+                monthlyPoints.map((mp) => (
+                  <div
+                    key={mp.id}
+                    className="px-4 py-2.5 flex items-center justify-between"
+                  >
+                    <span className="text-xs text-muted-foreground font-mono">
+                      {mp.month_id}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm font-semibold">
+                        {mp.total_score}
                       </span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm font-semibold">
-                          {mp.total_score}
-                        </span>
-                        {mp.rank != null && (
-                          <Badge variant="outline" className="text-[10px] font-mono">
-                            #{mp.rank}
-                          </Badge>
-                        )}
-                      </div>
+                      {mp.rank != null && (
+                        <Badge variant="outline" className="text-[10px] font-mono">
+                          #{mp.rank}
+                        </Badge>
+                      )}
                     </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
+  );
+}
+
+// ── Habit Heatmap (GitHub-style contribution graph) ──
+import type { HabitLog } from "@/lib/types";
+
+function HabitHeatmap({ habitLogs }: { habitLogs: HabitLog[] }) {
+  const activityMap = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    for (const log of habitLogs) {
+      if (!map.has(log.log_date)) map.set(log.log_date, new Set());
+      map.get(log.log_date)!.add(log.habit_type);
+    }
+    return map;
+  }, [habitLogs]);
+
+  const { weeks, monthLabels } = useMemo(() => {
+    const today = new Date();
+    const totalWeeks = 16;
+    const totalDays = totalWeeks * 7;
+
+    const endDay = new Date(today);
+    endDay.setDate(endDay.getDate() + (6 - endDay.getDay()));
+
+    const startDay = new Date(endDay);
+    startDay.setDate(startDay.getDate() - totalDays + 1);
+
+    const weeks: string[][] = [];
+    const monthLabels: { label: string; col: number }[] = [];
+    let lastMonth = -1;
+
+    for (let w = 0; w < totalWeeks; w++) {
+      const week: string[] = [];
+      for (let d = 0; d < 7; d++) {
+        const date = new Date(startDay);
+        date.setDate(startDay.getDate() + w * 7 + d);
+        const dateStr = date.toISOString().slice(0, 10);
+        week.push(dateStr);
+
+        if (d === 0 && date.getMonth() !== lastMonth) {
+          lastMonth = date.getMonth();
+          monthLabels.push({ label: `${date.getMonth() + 1}月`, col: w });
+        }
+      }
+      weeks.push(week);
+    }
+    return { weeks, monthLabels };
+  }, []);
+
+  const cellSize = 12;
+  const gap = 2;
+  const dayLabels = ["一", "", "三", "", "五", "", "日"];
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-sm">习惯打卡</CardTitle>
+            <CardDescription className="text-[10px]">{habitLogs.length} 次打卡</CardDescription>
+          </div>
+          <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
+            <span>少</span>
+            <div className="flex gap-0.5">
+              <div className="size-2.5 rounded-sm bg-muted/30" />
+              <div className="size-2.5 rounded-sm bg-[oklch(0.85_0.25_145/0.3)]" />
+              <div className="size-2.5 rounded-sm bg-[oklch(0.85_0.25_145/0.7)]" />
+            </div>
+            <span>多</span>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <div className="inline-flex gap-0.5">
+            <div className="flex flex-col mr-1" style={{ gap }}>
+              {dayLabels.map((label, i) => (
+                <div key={i} className="text-[9px] text-muted-foreground/60 flex items-center justify-end" style={{ height: cellSize, width: 14 }}>
+                  {label}
+                </div>
+              ))}
+            </div>
+            <div>
+              <div className="flex relative" style={{ height: 14, marginBottom: 2 }}>
+                {monthLabels.map((ml, i) => (
+                  <span key={i} className="text-[9px] text-muted-foreground/60 absolute" style={{ left: ml.col * (cellSize + gap) }}>
+                    {ml.label}
+                  </span>
+                ))}
+              </div>
+              <div className="flex" style={{ gap }}>
+                {weeks.map((week, wi) => (
+                  <div key={wi} className="flex flex-col" style={{ gap }}>
+                    {week.map((dateStr, di) => {
+                      const types = activityMap.get(dateStr);
+                      const level = types ? types.size : 0;
+                      const isFuture = dateStr > new Date().toISOString().slice(0, 10);
+                      const title = types ? `${dateStr}: ${Array.from(types).join(" + ")}` : dateStr;
+
+                      return (
+                        <div
+                          key={di}
+                          title={title}
+                          className={`rounded-sm ${
+                            isFuture ? "bg-transparent"
+                              : level === 0 ? "bg-muted/20"
+                              : level === 1 ? "bg-[oklch(0.85_0.25_145/0.3)]"
+                              : "bg-[oklch(0.85_0.25_145/0.7)]"
+                          }`}
+                          style={{ width: cellSize, height: cellSize }}
+                        />
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

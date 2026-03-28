@@ -70,7 +70,6 @@ export interface HabitProof {
 
 // ── Filter Types (for /records page) ──
 
-export type TimeRange = 'all' | 'recent3m' | 'custom';
 export type ExamTypeFilter = 'all' | 'micro_test' | 'major_exam';
 
 // ── Computed / Display Types ──
