@@ -93,7 +93,7 @@ export function AcademicTab({
                const isBelowThreshold = record.subject === '英语' ? score < 90 : score < 95;
                const isStrike = record.event_type === 'micro_test' && (record.is_retest || score < 60 || isBelowThreshold);
                const weekIdx = getWeekIndexForDate(weeks, new Date(record.event_date));
-               const weekLabel = weekIdx >= 0 ? `W${weekIdx + 1}` : null;
+               const weekLabel = weekIdx >= 0 ? `第${weekIdx + 1}周` : null;
 
                return (
                 <div key={record.id} className="p-4 flex items-center justify-between">

@@ -133,6 +133,13 @@ const marPoints = [
   { player_id: P, month_id: '2026-03', total_score: 25, rank: 12, notes: '学习+1+1+4+3+1，周积分+1+6+3+4' },
 ];
 
+const questProofs = [
+  { player_id: P, quest_title: '体能训练', quest_type: '运动', status: 'pending', reward_amount: 50 },
+  { player_id: P, quest_title: '知识拓展', quest_type: '阅读', status: 'under_review', reward_amount: 50 },
+  { player_id: P, quest_title: '每日晨跑', quest_type: '运动', status: 'approved', reward_amount: 50 },
+  { player_id: P, quest_title: '课外阅读笔记', quest_type: '阅读', status: 'pending', reward_amount: 50 },
+];
+
 // ═══════════════════════════════════════════════════════════
 
 async function seedData() {
@@ -144,6 +151,7 @@ async function seedData() {
     ['March micro tests', 'academic_records', marMicroTests],
     ['March major exams', 'academic_records', marMajorExams],
     ['March habits', 'habit_logs', marHabits],
+    ['Quest proofs', 'quest_proofs', questProofs],
   ];
 
   for (const [label, table, data] of inserts) {

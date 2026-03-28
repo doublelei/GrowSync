@@ -61,9 +61,6 @@ export default function Home() {
           <p className="text-xs text-muted-foreground">
             {playerData.name}
           </p>
-          <p className="text-[10px] text-muted-foreground/60">
-            {weeks.length} 周赛季
-          </p>
         </div>
       </header>
 
@@ -89,7 +86,7 @@ export default function Home() {
           </TabsContent>
 
           <TabsContent value="admin">
-            <AdminTab pendingProofs={pendingProofs} playerData={playerData} currentWeekNum={currentWeekInfo.week} />
+            <AdminTab pendingProofs={pendingProofs} playerData={playerData} currentWeekNum={currentWeekInfo.week} academicRecords={academicRecords} habitLogs={habitLogs} />
           </TabsContent>
         </Tabs>
       </main>

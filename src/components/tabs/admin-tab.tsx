@@ -3,9 +3,15 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
-import type { PlayerData, PendingProofDisplay } from "@/lib/types";
+import type { PlayerData, PendingProofDisplay, AcademicRecord, HabitLog } from "@/lib/types";
 
-export function AdminTab({ pendingProofs, playerData, currentWeekNum }: { pendingProofs: PendingProofDisplay[], playerData: PlayerData, currentWeekNum: number }) {
+export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRecords = [], habitLogs = [] }: {
+  pendingProofs: PendingProofDisplay[];
+  playerData: PlayerData;
+  currentWeekNum: number;
+  academicRecords?: AcademicRecord[];
+  habitLogs?: HabitLog[];
+}) {
 
   const handleMicroTestSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -157,6 +163,12 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum }: { pendin
     else alert("已驳回。");
   };
 
+  const handleDeleteRecord = async (table: string, id: number) => {
+    if (!confirm("确认删除这条记录？")) return;
+    const { error } = await supabase.from(table).delete().eq('id', id);
+    if (error) alert("删除失败: " + error.message);
+  };
+
   return (
     <div className="space-y-6">
 
@@ -214,7 +226,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum }: { pendin
               <input name="highest_score" type="number" step="0.5" placeholder="最高分(选填)" className="w-1/3 bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" />
               <input name="class_rank" type="number" placeholder="排名(选填)" className="w-1/3 bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" />
             </div>
-            <button type="submit" className="w-full mt-2 bg-primary/90 text-primary-foreground py-2 rounded-md text-xs font-semibold">生成专属大数据报告</button>
+            <button type="submit" className="w-full mt-2 bg-primary/90 text-primary-foreground py-2 rounded-md text-xs font-semibold">录入大考成绩</button>
           </form>
         </CardContent>
       </Card>
@@ -253,6 +265,69 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum }: { pendin
           </CardContent>
         </Card>
       </div>
+
+      {/* Record Management */}
+      <Card className="shadow-none border-border/50">
+        <CardHeader className="p-4 bg-muted/10 border-b border-border/50">
+          <CardTitle className="text-sm font-semibold">已录入成绩 (本赛季)</CardTitle>
+          <CardDescription className="text-xs">点击删除按钮移除错误记录</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="divide-y divide-border/50 max-h-64 overflow-y-auto">
+            {[...academicRecords].sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime()).map((r) => (
+              <div key={r.id} className="p-3 flex items-center justify-between text-xs">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono text-muted-foreground">{r.event_date}</span>
+                    <span className="font-medium">{r.subject}</span>
+                    {r.is_retest && <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5">重测</Badge>}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                    {r.exam_name || r.event_type} · {r.score}/{r.max_score}
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleDeleteRecord('academic_records', r.id)}
+                  className="ml-2 text-[10px] text-destructive/60 hover:text-destructive px-1.5 py-1 rounded transition-colors"
+                >
+                  删除
+                </button>
+              </div>
+            ))}
+            {academicRecords.length === 0 && (
+              <div className="p-4 text-center text-xs text-muted-foreground">暂无成绩记录</div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-none border-border/50">
+        <CardHeader className="p-4 bg-muted/10 border-b border-border/50">
+          <CardTitle className="text-sm font-semibold">已录入打卡 (本赛季)</CardTitle>
+          <CardDescription className="text-xs">点击删除按钮移除错误记录</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="divide-y divide-border/50 max-h-48 overflow-y-auto">
+            {habitLogs.map((h) => (
+              <div key={h.id} className="p-3 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-muted-foreground">{h.log_date}</span>
+                  <Badge variant="outline" className="text-[10px] py-0 h-4 font-normal">{h.habit_type}</Badge>
+                </div>
+                <button
+                  onClick={() => handleDeleteRecord('habit_logs', h.id)}
+                  className="text-[10px] text-destructive/60 hover:text-destructive px-1.5 py-1 rounded transition-colors"
+                >
+                  删除
+                </button>
+              </div>
+            ))}
+            {habitLogs.length === 0 && (
+              <div className="p-4 text-center text-xs text-muted-foreground">暂无打卡记录</div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
        <Card className="shadow-none border-border/50">
         <CardHeader className="p-4 bg-muted/10 border-b border-border/50">
