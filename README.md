@@ -89,7 +89,7 @@ cp .env.example .env.local
 # 填入 Supabase URL 和 Anon Key
 
 # 3. 初始化数据库（在 Supabase SQL Editor 中运行）
-# supabase-schema-update.sql
+# scripts/supabase-schema-update.sql
 
 # 4. 注入测试数据
 npm run db:test-data
@@ -125,6 +125,5 @@ src/
     date-utils.ts               赛季时间模型（周一锚定）
     types.ts                    TypeScript 类型定义
     supabase.ts                 Supabase 客户端
-scripts/                        数据库管理脚本
-supabase-schema-update.sql      数据库 Schema（含去重约束）
+scripts/                        数据库管理脚本 + Schema SQL
 ```
