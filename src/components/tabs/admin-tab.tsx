@@ -255,7 +255,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
           <input name="exam_name" type="text" placeholder="考试名称 (例: U9单元测/期中评估)" className={inputClass} required />
           <div className="flex items-center gap-2">
             <input name="score" type="number" step="0.5" placeholder="得 分" className={`w-1/2 ${inputClass}`} required />
-            <input name="max_score" type="number" placeholder="满分(缺省100)" defaultValue={100} className={`w-1/2 ${inputClass}`} required />
+            <input name="max_score" type="number" step="0.5" placeholder="满分(缺省100)" defaultValue={100} className={`w-1/2 ${inputClass}`} required />
           </div>
           <div className="flex gap-2">
             <input name="class_avg" type="number" step="0.1" placeholder="班级均分(选填)" className={`w-1/3 ${inputClass}`} />
