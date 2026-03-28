@@ -174,6 +174,29 @@ export function useInsertMajorExam(monthId: string) {
   });
 }
 
+interface RatingInput {
+  recordId: number;
+  rating: 'bonus' | 'neutral' | 'penalty';
+  reason?: string;
+}
+
+export function useUpdateMajorExamRating(monthId: string) {
+  const inv = useInvalidate(monthId);
+  return useMutation({
+    mutationFn: async (input: RatingInput) => {
+      const { error } = await supabase
+        .from('academic_records')
+        .update({
+          major_exam_rating: input.rating,
+          rating_reason: input.reason ?? null,
+        })
+        .eq('id', input.recordId);
+      if (error) throw error;
+    },
+    onSuccess: () => inv.academics(),
+  });
+}
+
 interface MonthlyPointInput {
   month_id: string;
   total_score: number;

@@ -6,10 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
-import { SUBJECTS, HABIT_TYPES, todayBeijing, currentMonthBeijing } from "@/lib/constants";
+import { SUBJECTS, HABIT_TYPES, todayBeijing, currentMonthBeijing, RATING_REASON_PRESETS } from "@/lib/constants";
 import {
   useInsertMicroTest,
   useInsertMajorExam,
+  useUpdateMajorExamRating,
   useUpsertMonthlyPoints,
   useUpsertHabit,
   useDeleteRecord,
@@ -17,7 +18,8 @@ import {
   useRejectHabitProof,
   checkDuplicateAcademic,
 } from "@/hooks/useMutations";
-import type { PlayerData, PendingProofDisplay, AcademicRecord, HabitLog, HabitProof } from "@/lib/types";
+import { suggestRating } from "@/lib/calculations";
+import type { PlayerData, PendingProofDisplay, AcademicRecord, HabitLog, HabitProof, MajorExamRating } from "@/lib/types";
 
 const inputClass = "w-full bg-muted/20 border border-border/50 rounded-md px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 transition-colors";
 const selectClass = "w-full bg-muted/20 border border-border/50 rounded-md px-2 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 transition-colors";
@@ -64,6 +66,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
 
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
+  const [ratingRecordId, setRatingRecordId] = useState<number | null>(null);
 
   const toggleSection = useCallback((id: string) => {
     setActiveSection(prev => prev === id ? null : id);
@@ -76,6 +79,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
   const deleteRecord = useDeleteRecord(monthId);
   const approveHabitProof = useApproveHabitProof(monthId);
   const rejectHabitProof = useRejectHabitProof(monthId);
+  const updateRating = useUpdateMajorExamRating(monthId);
 
   const handleMicroTestSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -193,6 +197,10 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
 
   const pendingHabitProofs = habitProofs.filter(p => p.status === 'pending');
 
+  const unratedMajorExams = academicRecords.filter(
+    r => r.event_type === 'major_exam' && r.major_exam_rating == null,
+  );
+
   const handleDeleteRecord = (table: string, id: number) => {
     const key = `${table}-${id}`;
     if (confirmingDelete !== key) {
@@ -268,6 +276,35 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
         </form>
       </Section>
 
+      {/* 2b. Unrated major exams — rating confirmation */}
+      {unratedMajorExams.length > 0 && (
+        <Card className="shadow-none border-primary/30 bg-primary/5">
+          <div className="p-4 bg-primary/10 border-b border-primary/20">
+            <div className="text-sm font-semibold text-foreground">待评级大考</div>
+            <div className="text-xs text-muted-foreground mt-0.5">{unratedMajorExams.length} 条大考成绩等待评级</div>
+          </div>
+          <CardContent className="p-4 space-y-3">
+            {unratedMajorExams.map(record => (
+              <ExamRatingCard
+                key={record.id}
+                record={record}
+                isPending={updateRating.isPending && ratingRecordId === record.id}
+                onConfirm={(rating, reason) => {
+                  setRatingRecordId(record.id);
+                  updateRating.mutate(
+                    { recordId: record.id, rating, reason },
+                    {
+                      onSuccess: () => { setRatingRecordId(null); toast.success(`${record.subject}「${record.exam_name}」评级已确认`); },
+                      onError: (err) => { setRatingRecordId(null); toast.error("评级失败: " + err.message); },
+                    },
+                  );
+                }}
+              />
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {/* 3. Monthly points + Habit backfill — collapsible, side by side */}
       <Section id="extra" title="月度排名 + 补录打卡" description="月度积分排名与手动补录打卡" activeSection={activeSection} onToggle={toggleSection}>
         <div className="grid grid-cols-2 gap-4">
@@ -314,6 +351,18 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
                       <span className="font-mono text-muted-foreground">{r.event_date}</span>
                       <span className="font-medium">{r.subject}</span>
                       {r.is_retest && <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5">重测</Badge>}
+                      {r.event_type === 'major_exam' && r.major_exam_rating === 'bonus' && (
+                        <Badge className="text-[9px] px-1 py-0 h-3.5 bg-emerald-500/20 text-emerald-600 border-emerald-500/30">加分</Badge>
+                      )}
+                      {r.event_type === 'major_exam' && r.major_exam_rating === 'penalty' && (
+                        <Badge className="text-[9px] px-1 py-0 h-3.5 bg-destructive/20 text-destructive border-destructive/30">扣分</Badge>
+                      )}
+                      {r.event_type === 'major_exam' && r.major_exam_rating === 'neutral' && (
+                        <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5">不变</Badge>
+                      )}
+                      {r.event_type === 'major_exam' && r.major_exam_rating == null && (
+                        <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5 border-orange-400/50 text-orange-500">待评级</Badge>
+                      )}
                     </div>
                     <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
                       {r.exam_name || (r.event_type === 'micro_test' ? '小测' : r.event_type === 'major_exam' ? '大考' : r.event_type)} · {r.score}/{r.max_score}
@@ -459,6 +508,122 @@ function HabitProofReviewItem({ proof, onApprove, onReject, approving, rejecting
           {rejecting ? '处理中...' : '驳回'}
         </button>
       </div>
+    </div>
+  );
+}
+
+function ExamRatingCard({ record, onConfirm, isPending }: {
+  record: AcademicRecord;
+  onConfirm: (rating: MajorExamRating, reason?: string) => void;
+  isPending: boolean;
+}) {
+  const [selectedRating, setSelectedRating] = useState<MajorExamRating | null>(null);
+  const [reason, setReason] = useState('');
+  const [showReason, setShowReason] = useState(false);
+
+  const suggested = suggestRating(record);
+  const scoreRate = record.max_score > 0 ? record.score / record.max_score : 0;
+
+  const conditions: string[] = [];
+  if (suggested === 'bonus') {
+    if (scoreRate >= 0.9) conditions.push(`得分率 ${(scoreRate * 100).toFixed(0)}% ≥ 90%`);
+    if (record.highest_score != null && record.score >= record.highest_score) conditions.push('最高分');
+    if (record.class_rank != null && record.class_rank <= 3) conditions.push(`排名第 ${record.class_rank}`);
+  } else if (suggested === 'penalty') {
+    if (scoreRate < 0.75) conditions.push(`得分率 ${(scoreRate * 100).toFixed(0)}% < 75%`);
+    if (record.class_rank != null && record.class_rank >= 9) conditions.push(`排名第 ${record.class_rank}`);
+  }
+
+  const current = selectedRating ?? suggested;
+  const isOverride = selectedRating != null && selectedRating !== suggested;
+
+  const ratingConfig = {
+    bonus: { label: '加分 +¥25', className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' },
+    neutral: { label: '不变 ¥0', className: 'bg-muted/20 text-foreground border-border/50' },
+    penalty: { label: '扣分 -¥25', className: 'bg-destructive/10 text-destructive border-destructive/30' },
+  } as const;
+
+  return (
+    <div className="p-3 border border-border/50 rounded-md space-y-2.5">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-1.5 text-xs">
+            <span className="font-mono text-muted-foreground">{record.event_date}</span>
+            <span className="font-medium">{record.subject}</span>
+          </div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">
+            {record.exam_name} · {record.score}/{record.max_score}
+            {record.class_rank != null && ` · 排名第${record.class_rank}`}
+            {record.highest_score != null && ` · 最高${record.highest_score}`}
+          </div>
+        </div>
+        <div className={`text-[10px] px-1.5 py-0.5 rounded border ${ratingConfig[suggested].className}`}>
+          建议: {ratingConfig[suggested].label}
+        </div>
+      </div>
+
+      {conditions.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {conditions.map((c, i) => (
+            <span key={i} className="text-[9px] bg-muted/30 text-muted-foreground px-1.5 py-0.5 rounded">{c}</span>
+          ))}
+        </div>
+      )}
+
+      <div className="flex gap-1.5">
+        {(['bonus', 'neutral', 'penalty'] as const).map(r => (
+          <button
+            key={r}
+            onClick={() => {
+              setSelectedRating(r);
+              setShowReason(r !== suggested);
+            }}
+            className={`flex-1 text-[10px] py-1.5 rounded border transition-all ${
+              current === r
+                ? ratingConfig[r].className + ' font-semibold ring-1 ring-offset-1 ring-primary/30'
+                : 'bg-muted/10 text-muted-foreground border-border/30 hover:border-border'
+            }`}
+          >
+            {ratingConfig[r].label}
+          </button>
+        ))}
+      </div>
+
+      {showReason && isOverride && (
+        <div className="space-y-1.5">
+          <div className="flex flex-wrap gap-1">
+            {RATING_REASON_PRESETS.map(preset => (
+              <button
+                key={preset}
+                onClick={() => setReason(preset)}
+                className={`text-[9px] px-1.5 py-0.5 rounded border transition-colors ${
+                  reason === preset
+                    ? 'bg-primary/10 text-primary border-primary/30'
+                    : 'bg-muted/10 text-muted-foreground border-border/30 hover:border-border'
+                }`}
+              >
+                {preset}
+              </button>
+            ))}
+          </div>
+          <input
+            type="text"
+            value={reason}
+            onChange={e => setReason(e.target.value)}
+            placeholder="自定义原因(选填)"
+            className="w-full bg-muted/20 border border-border/50 rounded-md px-2 py-1 text-[10px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
+          />
+        </div>
+      )}
+
+      <Button
+        size="sm"
+        className="w-full"
+        disabled={isPending}
+        onClick={() => onConfirm(current, isOverride ? reason || undefined : undefined)}
+      >
+        {isPending ? '提交中...' : '确认评级'}
+      </Button>
     </div>
   );
 }

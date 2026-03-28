@@ -87,9 +87,23 @@ export function DashboardTab({ playerData }: { playerData: PlayerData }) {
                         {w.deductions.map((d, i) => (
                           <span key={i} className="bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-sm font-sans text-[10px]">{d.reason}</span>
                         ))}
+                        {w.examAdjustments.map((ea, i) => (
+                          <span
+                            key={`ea-${i}`}
+                            className={`px-1.5 py-0.5 rounded-sm font-sans text-[10px] ${
+                              ea.rating === 'bonus'
+                                ? 'bg-emerald-500/10 text-emerald-600'
+                                : ea.rating === 'penalty'
+                                  ? 'bg-destructive/10 text-destructive'
+                                  : 'hidden'
+                            }`}
+                          >
+                            {ea.subject}{ea.examName ? `(${ea.examName})` : ''}: {ea.amount > 0 ? '+' : ''}{ea.amount}
+                          </span>
+                        ))}
                       </div>
-                      <span className={w.remaining === WEEKLY_ACADEMIC_BASE ? "text-foreground" : w.remaining > 0 ? "text-orange-500 font-bold" : "text-destructive font-bold"}>
-                        本周剩余: &yen;{w.remaining}/{WEEKLY_ACADEMIC_BASE}
+                      <span className={w.remaining === WEEKLY_ACADEMIC_BASE ? "text-foreground" : w.remaining > WEEKLY_ACADEMIC_BASE ? "text-emerald-600 font-bold" : w.remaining > 0 ? "text-orange-500 font-bold" : "text-destructive font-bold"}>
+                        本周: &yen;{w.remaining}/{WEEKLY_ACADEMIC_BASE}
                       </span>
                     </div>
                   </div>
@@ -103,8 +117,13 @@ export function DashboardTab({ playerData }: { playerData: PlayerData }) {
           <CardHeader className="p-4 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-medium text-muted-foreground">月度排名奖</CardTitle>
             <div className="flex items-center gap-2">
-              <div className="text-xl font-semibold font-mono text-muted-foreground flex items-center">&yen;{playerData.monthlyPoolEarned} <span className="text-xs text-muted-foreground/50 font-sans font-normal ml-1">/ &yen;{playerData.monthlyPoolTotal}</span></div>
-              {playerData.monthlyPoolEarned === 0 && (
+              <div className={`text-xl font-semibold font-mono flex items-center ${
+                playerData.monthlyPoolEarned > 0 ? 'text-emerald-600' : playerData.monthlyPoolEarned < 0 ? 'text-destructive' : 'text-muted-foreground'
+              }`}>
+                {playerData.monthlyPoolEarned > 0 ? '+' : ''}&yen;{playerData.monthlyPoolEarned}
+                <span className="text-xs text-muted-foreground/50 font-sans font-normal ml-1">&plusmn;&yen;{playerData.monthlyPoolTotal}</span>
+              </div>
+              {playerData.monthlyPoolEarned === 0 && !playerData.monthlyPoolRank && (
                 <Badge variant="outline" className="text-[10px] text-muted-foreground border-border/50 font-normal">待公布</Badge>
               )}
             </div>

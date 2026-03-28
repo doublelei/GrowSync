@@ -117,9 +117,10 @@ export function useSeasonData(params: SeasonParams) {
 
   const weeklyQuests = calculateWeeklyQuests(params.weeks, habitLogs, academicRecords);
   const monthlyPoolEarned = calculateMonthlyPool(monthlyPoints, params.monthId);
+  const monthlyEntry = monthlyPoints.find(p => p.month_id === params.monthId);
   const recentLogs = formatRecentLogs(transactionList);
   const playerData = aggregatePlayerData(
-    PLAYER_ID, weeklyQuests, monthlyPoolEarned, params.weeks.length, recentLogs,
+    PLAYER_ID, weeklyQuests, monthlyPoolEarned, monthlyEntry?.rank, params.weeks.length, recentLogs,
   );
 
   const data: GrowSyncData | null = isLoading ? null : {

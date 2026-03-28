@@ -11,18 +11,22 @@ export const STRIKE_THRESHOLD_ENGLISH = 90;
 export const STRIKE_THRESHOLD_DEFAULT = 95;
 export const STRIKE_PENALTY = 20; // ¥ deducted per strike
 
+// ── Major Exam Rating ──
+export const MAJOR_EXAM_BONUS = 25;
+export const MAJOR_EXAM_PENALTY = -25;
+export const MAJOR_EXAM_BONUS_SCORE_RATE = 0.9;
+export const MAJOR_EXAM_PENALTY_SCORE_RATE = 0.75;
+export const MAJOR_EXAM_BONUS_RANK = 3;
+export const MAJOR_EXAM_PENALTY_RANK = 9;
+export const RATING_REASON_PRESETS = ['试卷偏难', '进步明显', '退步明显', '特殊情况'] as const;
+
 // ── Pool Amounts ──
-export const BASE_POOL = 400;
+export const BASE_POOL = 300;
 export const HABIT_REWARD_PER_TYPE = 25;   // ¥25 for exercise, ¥25 for reading
 export const WEEKLY_HABIT_CAP = 50;        // HABIT_REWARD_PER_TYPE × 2
 export const WEEKLY_ACADEMIC_BASE = 100;   // ¥100 per week before strikes
-export const MONTHLY_RANK_CAP = 200;
-
-export const MONTHLY_RANK_TIERS = [
-  { maxRank: 10, reward: 200 },
-  { maxRank: 20, reward: 100 },
-  { maxRank: 30, reward: 50 },
-] as const;
+export const MONTHLY_RANK_CAP = 200;       // ±¥200 range
+export const CLASS_SIZE = 20;
 
 // ── Habit Types ──
 export const HABIT_TYPES = ['运动', '阅读'] as const;

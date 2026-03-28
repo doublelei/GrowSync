@@ -11,18 +11,46 @@ import {
   QuestDisplay,
   PendingProofDisplay,
   PlayerData,
+  MajorExamRating,
 } from './types';
 import {
   STRIKE_THRESHOLD_ENGLISH,
   STRIKE_THRESHOLD_DEFAULT,
   STRIKE_PENALTY,
+  MAJOR_EXAM_BONUS,
+  MAJOR_EXAM_PENALTY,
+  MAJOR_EXAM_BONUS_SCORE_RATE,
+  MAJOR_EXAM_PENALTY_SCORE_RATE,
+  MAJOR_EXAM_BONUS_RANK,
+  MAJOR_EXAM_PENALTY_RANK,
   BASE_POOL,
   HABIT_REWARD_PER_TYPE,
   WEEKLY_HABIT_CAP,
   WEEKLY_ACADEMIC_BASE,
   MONTHLY_RANK_CAP,
-  MONTHLY_RANK_TIERS,
+  CLASS_SIZE,
 } from './constants';
+
+// ── Major Exam Rating ──
+
+export function suggestRating(record: AcademicRecord): MajorExamRating {
+  const scoreRate = record.max_score > 0 ? record.score / record.max_score : 0;
+
+  if (scoreRate >= MAJOR_EXAM_BONUS_SCORE_RATE) return 'bonus';
+  if (record.highest_score != null && record.score >= record.highest_score) return 'bonus';
+  if (record.class_rank != null && record.class_rank <= MAJOR_EXAM_BONUS_RANK) return 'bonus';
+
+  if (scoreRate < MAJOR_EXAM_PENALTY_SCORE_RATE) return 'penalty';
+  if (record.class_rank != null && record.class_rank >= MAJOR_EXAM_PENALTY_RANK) return 'penalty';
+
+  return 'neutral';
+}
+
+function ratingToAmount(rating: MajorExamRating): number {
+  if (rating === 'bonus') return MAJOR_EXAM_BONUS;
+  if (rating === 'penalty') return MAJOR_EXAM_PENALTY;
+  return 0;
+}
 
 // ── Weekly Quest Calculation ──
 
@@ -66,14 +94,29 @@ export function calculateWeeklyQuests(
     academicsThisWeek.forEach(a => {
       const score = Number(a.score);
       const threshold = a.subject === '英语' ? STRIKE_THRESHOLD_ENGLISH : STRIKE_THRESHOLD_DEFAULT;
-      if (a.is_retest || score < threshold) {
+      if (score < threshold) {
         strikes++;
-        const reason = a.is_retest ? '重考扣分' : '未达标';
-        deductions.push({ reason: `${a.subject}: ${reason}`, amount: STRIKE_PENALTY });
+        deductions.push({ reason: `${a.subject}: 未达标`, amount: STRIKE_PENALTY });
       }
     });
 
-    const academicPoolRemaining = Math.max(0, WEEKLY_ACADEMIC_BASE - strikes * STRIKE_PENALTY);
+    // Major exam rating adjustments (only confirmed ratings)
+    const majorExamsThisWeek = academicsWithDate.filter(
+      a => a.dateObj >= w.startDate && a.dateObj <= endOfDay
+        && a.event_type === 'major_exam'
+        && a.major_exam_rating != null,
+    );
+
+    const examAdjustments = majorExamsThisWeek.map(a => ({
+      subject: a.subject,
+      examName: a.exam_name,
+      rating: a.major_exam_rating as MajorExamRating,
+      amount: ratingToAmount(a.major_exam_rating as MajorExamRating),
+    }));
+
+    const examAdjustmentTotal = examAdjustments.reduce((sum, ea) => sum + ea.amount, 0);
+
+    const academicPoolRemaining = Math.max(0, WEEKLY_ACADEMIC_BASE - strikes * STRIKE_PENALTY + examAdjustmentTotal);
 
     return {
       week: idx + 1,
@@ -85,12 +128,19 @@ export function calculateWeeklyQuests(
       },
       exercise: { earned: exerciseEarned, status: exerciseEarned >= HABIT_REWARD_PER_TYPE ? 'completed' : 'pending' },
       reading: { earned: readingEarned, status: readingEarned >= HABIT_REWARD_PER_TYPE ? 'completed' : 'pending' },
-      academic: { earned: academicPoolRemaining, strikes, deductions },
+      academic: { earned: academicPoolRemaining, strikes, deductions, examAdjustments },
     };
   });
 }
 
-// ── Monthly Pool Calculation (fixes Bug #2 & #3) ──
+// ── Monthly Pool Calculation ──
+// Linear interpolation: rank 1 → +CAP, last → -CAP, rounded to nearest ¥5
+
+export function calculateRankReward(rank: number, classSize: number = CLASS_SIZE): number {
+  if (classSize <= 1) return 0;
+  const raw = MONTHLY_RANK_CAP * (1 - 2 * (rank - 1) / (classSize - 1));
+  return Math.round(raw / 5) * 5;
+}
 
 export function calculateMonthlyPool(
   monthlyPoints: MonthlySchoolPoint[],
@@ -98,11 +148,7 @@ export function calculateMonthlyPool(
 ): number {
   const entry = monthlyPoints.find(p => p.month_id === currentMonthId);
   if (!entry?.rank) return 0;
-
-  for (const tier of MONTHLY_RANK_TIERS) {
-    if (entry.rank <= tier.maxRank) return tier.reward;
-  }
-  return 0;
+  return calculateRankReward(entry.rank);
 }
 
 // ── Aggregate Player Data ──
@@ -111,6 +157,7 @@ export function aggregatePlayerData(
   playerId: string,
   weeklyQuests: WeeklyQuestState[],
   monthlyPoolEarned: number,
+  monthlyPoolRank: number | null | undefined,
   weeksCount: number,
   recentLogs: RecentLog[],
 ): PlayerData {
@@ -130,6 +177,7 @@ export function aggregatePlayerData(
     period: w.period,
     remaining: w.academic.earned,
     deductions: w.academic.deductions,
+    examAdjustments: w.academic.examAdjustments,
   }));
 
   return {
@@ -141,6 +189,7 @@ export function aggregatePlayerData(
     studyPoolTotal,
     monthlyPoolEarned,
     monthlyPoolTotal: MONTHLY_RANK_CAP,
+    monthlyPoolRank,
     totalUnlocked,
     totalCap,
     recentLogs,

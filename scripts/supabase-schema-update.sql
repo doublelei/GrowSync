@@ -80,6 +80,8 @@ CREATE TABLE IF NOT EXISTS habit_proofs (
 
 ALTER TABLE monthly_school_points ADD COLUMN IF NOT EXISTS rank integer;
 ALTER TABLE academic_records ADD COLUMN IF NOT EXISTS class_rank integer;
+ALTER TABLE academic_records ADD COLUMN IF NOT EXISTS major_exam_rating TEXT CHECK (major_exam_rating IN ('bonus', 'neutral', 'penalty'));
+ALTER TABLE academic_records ADD COLUMN IF NOT EXISTS rating_reason TEXT;
 
 -- 3. Unique constraints for dedup protection
 -- ------------------------------------------------------------

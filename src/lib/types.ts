@@ -1,5 +1,7 @@
 // ── Database Row Types ──
 
+export type MajorExamRating = 'bonus' | 'neutral' | 'penalty';
+
 export interface Transaction {
   id: number;
   player_id: string;
@@ -33,6 +35,8 @@ export interface AcademicRecord {
   highest_score?: number;
   class_rank?: number;
   is_retest?: boolean;
+  major_exam_rating?: 'bonus' | 'neutral' | 'penalty' | null;
+  rating_reason?: string | null;
   created_at: string;
 }
 
@@ -86,7 +90,12 @@ export interface WeeklyQuestState {
   period: { start: string; end: string; startDate: Date; endDate: Date };
   exercise: { earned: number; status: 'pending' | 'completed' };
   reading: { earned: number; status: 'pending' | 'completed' };
-  academic: { earned: number; strikes: number; deductions: { reason: string; amount: number }[] };
+  academic: {
+    earned: number;
+    strikes: number;
+    deductions: { reason: string; amount: number }[];
+    examAdjustments: { subject: string; examName?: string; rating: MajorExamRating; amount: number }[];
+  };
 }
 
 export interface AcademicBonusState {
@@ -94,6 +103,7 @@ export interface AcademicBonusState {
   period: { start: string; end: string; startDate: Date; endDate: Date };
   remaining: number;
   deductions: { reason: string; amount: number }[];
+  examAdjustments: { subject: string; examName?: string; rating: MajorExamRating; amount: number }[];
 }
 
 export interface RecentLog {
@@ -131,6 +141,7 @@ export interface PlayerData {
   studyPoolTotal: number;
   monthlyPoolEarned: number;
   monthlyPoolTotal: number;
+  monthlyPoolRank?: number | null;
   totalUnlocked: number;
   totalCap: number;
   recentLogs: RecentLog[];
