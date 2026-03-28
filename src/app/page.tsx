@@ -1,7 +1,9 @@
 "use client";
 
-import { useGrowSyncData } from "@/hooks/useGrowSyncData";
-import { getCurrentWeekIndex } from "@/lib/date-utils";
+import { useState } from "react";
+import { useSeasonNavigation } from "@/hooks/useSeasonNavigation";
+import { useSeasonData } from "@/hooks/useSeasonData";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
@@ -11,20 +13,41 @@ import { AcademicTab } from "@/components/tabs/academic-tab";
 import { AdminTab } from "@/components/tabs/admin-tab";
 
 export default function Home() {
-  const { data, loading, seasonInfo, goToPrevMonth, goToNextMonth, goToCurrentMonth, reloadData } = useGrowSyncData();
-  const { monthStr, weeks } = seasonInfo;
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const {
+    seasonInfo,
+    seasonRange,
+    currentWeekIndex,
+    goToPrevMonth,
+    goToNextMonth,
+    goToCurrentMonth,
+  } = useSeasonNavigation();
 
-  const currentWeekIdx = getCurrentWeekIndex(weeks, new Date());
-  const cw = weeks[currentWeekIdx];
-  const currentWeekInfo = cw
-    ? { start: cw.start, end: cw.end, week: currentWeekIdx + 1 }
-    : { start: '', end: '', week: 1 };
+  const { monthStr, monthId, weeks } = seasonInfo;
 
-  if (loading || !data) {
-    return <div className="h-[100dvh] bg-background flex flex-col items-center justify-center font-mono text-xs uppercase tracking-widest text-muted-foreground animate-pulse">Initializing Terminal...</div>;
+  const { data, isLoading } = useSeasonData({
+    monthId,
+    seasonStart: seasonRange.start,
+    seasonEnd: seasonRange.end,
+    weeks,
+  });
+
+  useRealtimeSync(monthId);
+
+  if (isLoading || !data) {
+    return (
+      <div className="h-[100dvh] bg-background flex flex-col items-center justify-center font-mono text-xs uppercase tracking-widest text-muted-foreground animate-pulse">
+        Initializing Terminal...
+      </div>
+    );
   }
 
-  const { playerData, quests, pendingProofs, academicRecords, habitLogs, monthlyPoints } = data;
+  const { playerData, pendingProofs, academicRecords, habitLogs, monthlyPoints } = data;
+
+  const cw = weeks[currentWeekIndex];
+  const currentWeekInfo = cw
+    ? { start: cw.start, end: cw.end, week: currentWeekIndex + 1 }
+    : { start: '', end: '', week: 1 };
 
   return (
     <div className="flex flex-col h-full bg-background border-r border-l border-border/50">
@@ -65,7 +88,7 @@ export default function Home() {
       </header>
 
       <main className="flex-1 overflow-y-auto w-full p-4 pb-20">
-        <Tabs defaultValue="dashboard" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-6 h-10 p-1 bg-muted/50 rounded-md">
             <TabsTrigger value="dashboard" className="text-xs font-medium rounded-sm">数据大屏</TabsTrigger>
             <TabsTrigger value="quests" className="text-xs font-medium rounded-sm">任务大厅</TabsTrigger>
@@ -78,15 +101,15 @@ export default function Home() {
           </TabsContent>
 
           <TabsContent value="quests">
-            <QuestsTab weeklyQuests={playerData.weeklyQuests} currentWeekIndex={currentWeekIdx} onDataChange={reloadData} />
+            <QuestsTab weeklyQuests={playerData.weeklyQuests} currentWeekIndex={currentWeekIndex} monthId={monthId} />
           </TabsContent>
 
           <TabsContent value="academic">
-            <AcademicTab records={academicRecords} habitLogs={habitLogs} monthlyPoints={monthlyPoints} weeklyQuests={playerData.weeklyQuests} currentWeekIndex={currentWeekIdx} weeks={weeks} />
+            <AcademicTab records={academicRecords} habitLogs={habitLogs} monthlyPoints={monthlyPoints} weeklyQuests={playerData.weeklyQuests} currentWeekIndex={currentWeekIndex} weeks={weeks} />
           </TabsContent>
 
           <TabsContent value="admin">
-            <AdminTab pendingProofs={pendingProofs} playerData={playerData} currentWeekNum={currentWeekInfo.week} academicRecords={academicRecords} habitLogs={habitLogs} onDataChange={reloadData} />
+            <AdminTab pendingProofs={pendingProofs} playerData={playerData} currentWeekNum={currentWeekInfo.week} academicRecords={academicRecords} habitLogs={habitLogs} monthId={monthId} />
           </TabsContent>
         </Tabs>
       </main>

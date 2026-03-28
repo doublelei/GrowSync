@@ -1,174 +1,163 @@
 "use client";
 
+import { useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/lib/supabase";
+import { SUBJECTS, HABIT_TYPES } from "@/lib/constants";
+import {
+  useInsertMicroTest,
+  useInsertMajorExam,
+  useUpsertMonthlyPoints,
+  useUpsertHabit,
+  useDeleteRecord,
+  useApproveProof,
+  useRejectProof,
+  checkDuplicateAcademic,
+} from "@/hooks/useMutations";
 import type { PlayerData, PendingProofDisplay, AcademicRecord, HabitLog } from "@/lib/types";
 
-export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRecords = [], habitLogs = [], onDataChange }: {
+export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRecords = [], habitLogs = [], monthId }: {
   pendingProofs: PendingProofDisplay[];
   playerData: PlayerData;
   currentWeekNum: number;
   academicRecords?: AcademicRecord[];
   habitLogs?: HabitLog[];
-  onDataChange: () => void;
+  monthId: string;
 }) {
+  const microTestForm = useRef<HTMLFormElement>(null);
+  const majorExamForm = useRef<HTMLFormElement>(null);
+  const monthlyPointForm = useRef<HTMLFormElement>(null);
+  const habitForm = useRef<HTMLFormElement>(null);
+
+  const insertMicroTest = useInsertMicroTest(monthId);
+  const insertMajorExam = useInsertMajorExam(monthId);
+  const upsertMonthlyPoints = useUpsertMonthlyPoints(monthId);
+  const upsertHabit = useUpsertHabit(monthId);
+  const deleteRecord = useDeleteRecord(monthId);
+  const approveProof = useApproveProof(monthId);
+  const rejectProof = useRejectProof(monthId);
 
   const handleMicroTestSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (insertMicroTest.isPending) return;
     const fd = new FormData(e.currentTarget);
-    const date = fd.get('date');
-    const subject = fd.get('subject');
-    const score = fd.get('score');
-    const max_score = fd.get('max_score');
+    const date = fd.get('date') as string;
+    const subject = fd.get('subject') as string;
+    const score = fd.get('score') as string;
+    const max_score = fd.get('max_score') as string;
     const is_retest = fd.get('is_retest') === 'on';
 
-    if (!date || !subject || !score || !max_score) return alert("必填项为空");
+    if (!date || !subject || !score || !max_score) { alert("必填项为空"); return; }
 
-    // Dedup check: warn if same date+subject+score already exists
-    const { data: existing } = await supabase
-      .from('academic_records')
-      .select('id')
-      .eq('player_id', playerData.name)
-      .eq('event_date', date)
-      .eq('subject', subject)
-      .eq('score', Number(score))
-      .limit(1);
-
-    if (existing && existing.length > 0) {
+    const isDuplicate = await checkDuplicateAcademic({ date, subject, score: Number(score) });
+    if (isDuplicate) {
       if (!confirm(`已存在 ${date} ${subject} ${score} 分的记录，确认重复录入？`)) return;
     }
 
-    const { error } = await supabase.from('academic_records').insert([{
-      player_id: playerData.name,
-      event_date: date,
-      event_type: 'micro_test',
-      subject,
-      score: Number(score),
-      max_score: Number(max_score),
-      is_retest
-    }]);
-    if (error) alert("录入失败: " + error.message);
-    else { (e.currentTarget as HTMLFormElement).reset(); onDataChange(); }
+    insertMicroTest.mutate(
+      { date, subject, score: Number(score), max_score: Number(max_score), is_retest },
+      {
+        onSuccess: () => microTestForm.current?.reset(),
+        onError: (err) => alert("录入失败: " + err.message),
+      },
+    );
   };
 
   const handleMajorExamSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (insertMajorExam.isPending) return;
     const fd = new FormData(e.currentTarget);
-    const date = fd.get('date');
-    const subject = fd.get('subject');
-    const exam_name = fd.get('exam_name');
-    const score = fd.get('score');
-    const max_score = fd.get('max_score');
-    const class_avg = fd.get('class_avg');
-    const highest_score = fd.get('highest_score');
-    const class_rank = fd.get('class_rank');
+    const date = fd.get('date') as string;
+    const subject = fd.get('subject') as string;
+    const exam_name = fd.get('exam_name') as string;
+    const score = fd.get('score') as string;
+    const max_score = fd.get('max_score') as string;
+    const class_avg = fd.get('class_avg') as string;
+    const highest_score = fd.get('highest_score') as string;
+    const class_rank = fd.get('class_rank') as string;
 
-    if (!date || !subject || !exam_name || !score || !max_score) return alert("必填项为空");
+    if (!date || !subject || !exam_name || !score || !max_score) { alert("必填项为空"); return; }
 
-    // Dedup check
-    const { data: existing } = await supabase
-      .from('academic_records')
-      .select('id')
-      .eq('player_id', playerData.name)
-      .eq('event_date', date)
-      .eq('subject', subject)
-      .eq('exam_name', exam_name)
-      .limit(1);
-
-    if (existing && existing.length > 0) {
+    const isDuplicate = await checkDuplicateAcademic({ date, subject, exam_name });
+    if (isDuplicate) {
       if (!confirm(`已存在 ${date} ${subject} "${exam_name}" 的记录，确认重复录入？`)) return;
     }
 
-    const record: Record<string, unknown> = {
-      player_id: playerData.name,
-      event_date: date,
-      event_type: 'major_exam',
-      subject,
-      exam_name,
-      score: Number(score),
-      max_score: Number(max_score)
+    const input: {
+      date: string; subject: string; exam_name: string;
+      score: number; max_score: number;
+      class_avg?: number; highest_score?: number; class_rank?: number;
+    } = {
+      date, subject, exam_name,
+      score: Number(score), max_score: Number(max_score),
     };
-    if (class_avg) record.class_avg = Number(class_avg);
-    if (highest_score) record.highest_score = Number(highest_score);
-    if (class_rank) record.class_rank = Number(class_rank);
+    if (class_avg) input.class_avg = Number(class_avg);
+    if (highest_score) input.highest_score = Number(highest_score);
+    if (class_rank) input.class_rank = Number(class_rank);
 
-    const { error } = await supabase.from('academic_records').insert([record]);
-    if (error) alert("录入失败: " + error.message);
-    else { (e.currentTarget as HTMLFormElement).reset(); onDataChange(); }
+    insertMajorExam.mutate(input, {
+      onSuccess: () => majorExamForm.current?.reset(),
+      onError: (err) => alert("录入失败: " + err.message),
+    });
   };
 
   const handleMonthlyPointSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (upsertMonthlyPoints.isPending) return;
     const fd = new FormData(e.currentTarget);
-    const month = fd.get('month');
-    const points = fd.get('points');
-    const rank = fd.get('rank');
-    const notes = fd.get('notes');
+    const month = fd.get('month') as string;
+    const points = fd.get('points') as string;
+    const rank = fd.get('rank') as string;
+    const notes = fd.get('notes') as string;
 
-    if (!month || !points) return alert("必填项为空");
+    if (!month || !points) { alert("必填项为空"); return; }
 
-    const { error } = await supabase.from('monthly_school_points').upsert([{
-      player_id: playerData.name,
-      month_id: month,
-      total_score: Number(points),
-      rank: rank ? Number(rank) : null,
-      notes
-    }], { onConflict: 'player_id,month_id' });
-    if (error) alert("录入失败: " + error.message);
-    else { (e.currentTarget as HTMLFormElement).reset(); onDataChange(); }
+    upsertMonthlyPoints.mutate(
+      { month_id: month, total_score: Number(points), rank: rank ? Number(rank) : null, notes },
+      {
+        onSuccess: () => monthlyPointForm.current?.reset(),
+        onError: (err) => alert("录入失败: " + err.message),
+      },
+    );
   };
 
   const handleHabitSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (upsertHabit.isPending) return;
     const fd = new FormData(e.currentTarget);
-    const date = fd.get('date');
-    const type = fd.get('type');
+    const date = fd.get('date') as string;
+    const type = fd.get('type') as string;
 
-    if (!date || !type) return alert("必填项为空");
+    if (!date || !type) { alert("必填项为空"); return; }
 
-    const { error } = await supabase.from('habit_logs').upsert([{
-      player_id: playerData.name,
-      log_date: date,
-      habit_type: type
-    }], { onConflict: 'player_id,log_date,habit_type' });
-    if (error) alert("录入失败: " + error.message);
-    else { (e.currentTarget as HTMLFormElement).reset(); onDataChange(); }
+    upsertHabit.mutate(
+      { date, type },
+      {
+        onSuccess: () => habitForm.current?.reset(),
+        onError: (err) => alert("录入失败: " + err.message),
+      },
+    );
   };
 
-  const handleApprove = async (proofId: number, reward: number) => {
-    const { error: updateError } = await supabase
-      .from('quest_proofs')
-      .update({ status: 'approved' })
-      .eq('id', proofId);
-
-    if (updateError) return alert("审批失败: " + updateError.message);
-
-    await supabase.from('transactions').insert([{
-      player_id: playerData.name,
-      amount: reward,
-      transaction_type: 'earned',
-      description: '任务审核通过奖励'
-    }]);
-
-    onDataChange();
+  const handleApprove = (proofId: number, reward: number) => {
+    approveProof.mutate(
+      { proofId, reward },
+      { onError: (err) => alert("审批失败: " + err.message) },
+    );
   };
 
-  const handleReject = async (proofId: number) => {
-    const { error } = await supabase
-      .from('quest_proofs')
-      .update({ status: 'rejected' })
-      .eq('id', proofId);
-
-    if (error) alert("操作失败: " + error.message);
-    else onDataChange();
+  const handleReject = (proofId: number) => {
+    rejectProof.mutate(proofId, {
+      onError: (err) => alert("操作失败: " + err.message),
+    });
   };
 
-  const handleDeleteRecord = async (table: string, id: number) => {
+  const handleDeleteRecord = (table: string, id: number) => {
     if (!confirm("确认删除这条记录？")) return;
-    const { error } = await supabase.from(table).delete().eq('id', id);
-    if (error) alert("删除失败: " + error.message);
-    else onDataChange();
+    deleteRecord.mutate(
+      { table, id },
+      { onError: (err) => alert("删除失败: " + err.message) },
+    );
   };
 
   return (
@@ -180,13 +169,11 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
           <CardDescription className="text-xs">高频录入每日听写散卷分数</CardDescription>
         </CardHeader>
         <CardContent className="p-4">
-          <form onSubmit={handleMicroTestSubmit} className="space-y-3">
+          <form ref={microTestForm} onSubmit={handleMicroTestSubmit} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <input name="date" type="date" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-xs text-foreground focus:outline-none" required defaultValue={new Date().toISOString().split('T')[0]} />
               <select name="subject" className="w-full bg-background border border-border/50 rounded px-1 py-1.5 text-xs text-foreground focus:outline-none">
-                <option value="英语">英语小测</option>
-                <option value="数学">数学测试</option>
-                <option value="语文">语文听写</option>
+                {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div className="flex items-center gap-2">
@@ -198,7 +185,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
                 <label htmlFor="is_retest" className="text-xs text-muted-foreground cursor-pointer">重考成绩</label>
               </div>
             </div>
-            <button type="submit" className="w-full mt-2 bg-primary/90 text-primary-foreground py-2 rounded-md text-xs font-semibold">录入小测基础分</button>
+            <button type="submit" disabled={insertMicroTest.isPending} className="w-full mt-2 bg-primary/90 text-primary-foreground py-2 rounded-md text-xs font-semibold disabled:opacity-50">{insertMicroTest.isPending ? '提交中...' : '录入小测基础分'}</button>
           </form>
         </CardContent>
       </Card>
@@ -209,13 +196,11 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
           <CardDescription className="text-xs">完整记录各指标以追踪相对排名进步</CardDescription>
         </CardHeader>
         <CardContent className="p-4">
-          <form onSubmit={handleMajorExamSubmit} className="space-y-3">
+          <form ref={majorExamForm} onSubmit={handleMajorExamSubmit} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
                <input name="date" type="date" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" required defaultValue={new Date().toISOString().split('T')[0]} />
                <select name="subject" className="w-full bg-background border border-border/50 rounded px-1 py-1.5 text-xs focus:outline-none">
-                <option value="英语">英语</option>
-                <option value="数学">数学</option>
-                <option value="语文">语文</option>
+                {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <input name="exam_name" type="text" placeholder="考试名称 (例: U9单元测/期中评估)" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" required />
@@ -228,7 +213,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
               <input name="highest_score" type="number" step="0.5" placeholder="最高分(选填)" className="w-1/3 bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" />
               <input name="class_rank" type="number" placeholder="排名(选填)" className="w-1/3 bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" />
             </div>
-            <button type="submit" className="w-full mt-2 bg-primary/90 text-primary-foreground py-2 rounded-md text-xs font-semibold">录入大考成绩</button>
+            <button type="submit" disabled={insertMajorExam.isPending} className="w-full mt-2 bg-primary/90 text-primary-foreground py-2 rounded-md text-xs font-semibold disabled:opacity-50">{insertMajorExam.isPending ? '提交中...' : '录入大考成绩'}</button>
           </form>
         </CardContent>
       </Card>
@@ -239,14 +224,14 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
              <CardTitle className="text-xs font-semibold">月底校内积分总结</CardTitle>
           </CardHeader>
           <CardContent className="p-3">
-             <form onSubmit={handleMonthlyPointSubmit} className="space-y-2">
+             <form ref={monthlyPointForm} onSubmit={handleMonthlyPointSubmit} className="space-y-2">
                <input name="month" type="month" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" required defaultValue={new Date().toISOString().slice(0, 7)} />
                <div className="flex gap-2">
                  <input name="points" type="number" placeholder="总分" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" required />
                  <input name="rank" type="number" placeholder="班排名" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" />
                </div>
                <input name="notes" type="text" placeholder="评语(选填)" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-[10px] focus:outline-none" />
-               <button type="submit" className="w-full bg-muted/80 text-foreground py-1.5 rounded-sm text-[10px]">提交月底总结</button>
+               <button type="submit" disabled={upsertMonthlyPoints.isPending} className="w-full bg-muted/80 text-foreground py-1.5 rounded-sm text-[10px]">{upsertMonthlyPoints.isPending ? '提交中...' : '提交月底总结'}</button>
              </form>
           </CardContent>
         </Card>
@@ -256,13 +241,12 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
              <CardTitle className="text-xs font-semibold">记录丢失补登</CardTitle>
           </CardHeader>
           <CardContent className="p-3">
-             <form onSubmit={handleHabitSubmit} className="space-y-2">
+             <form ref={habitForm} onSubmit={handleHabitSubmit} className="space-y-2">
                <input name="date" type="date" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" required defaultValue={new Date().toISOString().split('T')[0]} />
                <select name="type" className="w-full bg-background border border-border/50 rounded px-1 py-1.5 text-xs focus:outline-none" required>
-                 <option value="阅读">阅读打卡</option>
-                 <option value="运动">有氧运动</option>
+                 {HABIT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                </select>
-               <button type="submit" className="w-full bg-muted/80 text-foreground py-1.5 rounded-sm text-[10px] mt-2 block">追加补票</button>
+               <button type="submit" disabled={upsertHabit.isPending} className="w-full bg-muted/80 text-foreground py-1.5 rounded-sm text-[10px] mt-2 block">{upsertHabit.isPending ? '提交中...' : '追加补票'}</button>
              </form>
           </CardContent>
         </Card>
@@ -290,7 +274,8 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
                 </div>
                 <button
                   onClick={() => handleDeleteRecord('academic_records', r.id)}
-                  className="ml-2 text-[10px] text-destructive/60 hover:text-destructive px-1.5 py-1 rounded transition-colors"
+                  disabled={deleteRecord.isPending}
+                  className="ml-2 text-[10px] text-destructive/60 hover:text-destructive px-1.5 py-1 rounded transition-colors disabled:opacity-50"
                 >
                   删除
                 </button>
@@ -318,7 +303,8 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
                 </div>
                 <button
                   onClick={() => handleDeleteRecord('habit_logs', h.id)}
-                  className="text-[10px] text-destructive/60 hover:text-destructive px-1.5 py-1 rounded transition-colors"
+                  disabled={deleteRecord.isPending}
+                  className="text-[10px] text-destructive/60 hover:text-destructive px-1.5 py-1 rounded transition-colors disabled:opacity-50"
                 >
                   删除
                 </button>
@@ -350,15 +336,17 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
                 <div className="flex gap-2 mt-3">
                   <button
                     onClick={() => handleApprove(proof.id, proof.reward)}
-                    className="flex-1 py-2 bg-primary/10 text-primary border border-primary/20 rounded-md text-xs font-medium hover:bg-primary/20 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    disabled={approveProof.isPending}
+                    className="flex-1 py-2 bg-primary/10 text-primary border border-primary/20 rounded-md text-xs font-medium hover:bg-primary/20 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
                   >
-                    予以通过
+                    {approveProof.isPending ? '处理中...' : '予以通过'}
                   </button>
                   <button
                     onClick={() => handleReject(proof.id)}
-                    className="flex-1 py-2 bg-destructive/10 text-destructive border border-destructive/20 rounded-md text-xs font-medium hover:bg-destructive/20 transition-colors focus:outline-none focus:ring-2 focus:ring-destructive/40"
+                    disabled={rejectProof.isPending}
+                    className="flex-1 py-2 bg-destructive/10 text-destructive border border-destructive/20 rounded-md text-xs font-medium hover:bg-destructive/20 transition-colors focus:outline-none focus:ring-2 focus:ring-destructive/40 disabled:opacity-50"
                   >
-                    驳回重做
+                    {rejectProof.isPending ? '处理中...' : '驳回重做'}
                   </button>
                 </div>
               </div>

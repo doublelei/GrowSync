@@ -2,34 +2,21 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/lib/supabase";
-import { PLAYER_ID } from "@/lib/queries";
+import { HABIT_REWARD_PER_TYPE } from "@/lib/constants";
+import { useHabitCheckIn } from "@/hooks/useMutations";
 import type { WeeklyQuestState } from "@/lib/types";
 
-export function QuestsTab({ weeklyQuests, currentWeekIndex, onDataChange }: {
+export function QuestsTab({ weeklyQuests, currentWeekIndex, monthId }: {
   weeklyQuests: WeeklyQuestState[];
   currentWeekIndex: number;
-  onDataChange: () => void;
+  monthId: string;
 }) {
+  const checkIn = useHabitCheckIn(monthId);
   const week = weeklyQuests[currentWeekIndex];
+
   if (!week) {
     return <div className="p-8 text-center text-xs text-muted-foreground">本赛季暂无周数据</div>;
   }
-
-  const handleCheckIn = async (habitType: '运动' | '阅读') => {
-    const today = new Date().toISOString().split('T')[0];
-    const { error } = await supabase.from('habit_logs').upsert([{
-      player_id: PLAYER_ID,
-      log_date: today,
-      habit_type: habitType,
-    }], { onConflict: 'player_id,log_date,habit_type' });
-
-    if (error) {
-      alert("打卡失败: " + error.message);
-    } else {
-      onDataChange();
-    }
-  };
 
   const quests = [
     { key: 'exercise', label: '周末运动', type: '运动' as const, earned: week.exercise.earned, status: week.exercise.status },
@@ -70,24 +57,21 @@ export function QuestsTab({ weeklyQuests, currentWeekIndex, onDataChange }: {
                 {q.status === 'completed'
                   ? `${q.type}打卡已确认，¥${q.earned} 已锁定至本周奖金池`
                   : isWeekend
-                    ? `今天是周末，点击下方按钮完成${q.type}打卡即可获得 ¥50 奖励`
-                    : `周末完成一次${q.type}打卡即可获得 ¥50 奖励`
+                    ? `今天是周末，点击下方按钮完成${q.type}打卡即可获得 ¥${HABIT_REWARD_PER_TYPE} 奖励`
+                    : `周末完成一次${q.type}打卡即可获得 ¥${HABIT_REWARD_PER_TYPE} 奖励`
                 }
               </p>
               <div className="flex items-center justify-between">
                 <div className="text-lg font-mono font-semibold text-foreground">
-                  &yen;{q.earned} <span className="text-[10px] text-muted-foreground font-sans font-normal">/ &yen;50</span>
+                  &yen;{q.earned} <span className="text-[10px] text-muted-foreground font-sans font-normal">/ &yen;{HABIT_REWARD_PER_TYPE}</span>
                 </div>
-                {canCheckIn && (
+                {canCheckIn && isWeekend && (
                   <button
-                    onClick={() => handleCheckIn(q.type)}
-                    className={`text-xs font-medium px-4 py-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 ${
-                      isWeekend
-                        ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                        : 'bg-muted/50 text-muted-foreground border border-border/50 hover:bg-muted/80'
-                    }`}
+                    onClick={() => checkIn.mutate(q.type)}
+                    disabled={checkIn.isPending}
+                    className="text-xs font-medium px-4 py-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {isWeekend ? '立即打卡' : '提前打卡'}
+                    {checkIn.isPending ? '提交中...' : '立即打卡'}
                   </button>
                 )}
               </div>
