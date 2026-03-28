@@ -12,7 +12,7 @@ export default function RulesPage() {
           <ArrowLeft className="size-5" />
         </Link>
         <h1 className="text-lg font-bold tracking-tight text-foreground">
-          游戏规则
+          规则说明
         </h1>
       </header>
 
@@ -21,18 +21,18 @@ export default function RulesPage() {
         {/* 总览 */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">每月总奖池</CardTitle>
+            <CardTitle className="text-sm">每月总览</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-xs text-foreground/80 leading-relaxed">
             <p>每个月的零花钱由四个部分组成：</p>
             <div className="grid grid-cols-2 gap-2">
-              <Pool label="基础社交资金" amount="¥400" desc="每月固定发放" />
-              <Pool label="每周打卡奖金" amount="¥50/周" desc="运动 ¥25 + 阅读 ¥25" />
-              <Pool label="学习表现奖金" amount="¥100/周" desc="满分起步，扣分递减" />
-              <Pool label="月末排名挑战" amount="最高 ¥200" desc="依据班级排名" />
+              <Pool label="固定零花钱" amount="¥300" desc="每月固定发放" />
+              <Pool label="打卡奖励" amount="¥50/周" desc="运动 ¥25 + 阅读 ¥25" />
+              <Pool label="考试奖励" amount="¥100/周" desc="满分起步，扣分递减" />
+              <Pool label="月度排名奖" amount="最高 ¥200" desc="依据班级排名" />
             </div>
             <p className="text-muted-foreground text-[10px]">
-              假设一个月有 4 周，理论月度上限 = 400 + 4×50 + 4×100 + 200 = <span className="font-mono font-semibold text-primary">¥1200</span>
+              假设一个月有 4 周，理论月度上限 = 300 + 4×50 + 4×100 + 200 = <span className="font-mono font-semibold text-primary">¥1100</span>
             </p>
           </CardContent>
         </Card>
@@ -40,10 +40,10 @@ export default function RulesPage() {
         {/* 打卡规则 */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">打卡规则</CardTitle>
+            <CardTitle className="text-sm">打卡奖励</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-xs text-foreground/80 leading-relaxed">
-            <Rule text="每周有两个打卡任务：运动和阅读" />
+            <Rule text="每周有两项打卡：运动和阅读" />
             <Rule text="只需在周末（周六或周日）完成一次即可" />
             <Rule text="运动打卡：完成即得 ¥25" />
             <Rule text="阅读打卡：完成即得 ¥25" />
@@ -54,20 +54,42 @@ export default function RulesPage() {
           </CardContent>
         </Card>
 
-        {/* 学习表现 */}
+        {/* 学习表现 — 小测 */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">学习表现奖金</CardTitle>
+            <CardTitle className="text-sm">考试奖励 — 小测</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-xs text-foreground/80 leading-relaxed">
             <p>每周基础 <span className="font-mono font-semibold">¥100</span>，根据日常小测成绩扣分：</p>
             <div className="bg-muted/10 rounded-md p-3 space-y-1.5">
               <Rule text="英语小测低于 90 分 → 扣 ¥20" warn />
-              <Rule text="数学/语文/理综小测低于 95 分 → 扣 ¥20" warn />
-              <Rule text="重考的成绩 → 额外扣 ¥20" warn />
+              <Rule text="其它科目小测低于 95 分 → 扣 ¥20" warn />
             </div>
             <p className="text-muted-foreground text-[10px] pt-1">
-              每次扣 ¥20，扣完为止（最低 ¥0）。大考成绩不参与扣分计算。
+              每次扣 ¥20，扣完为止（最低 ¥0）。重考成绩不额外扣分。
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* 学习表现 — 大考 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">考试奖励 — 大考评级</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-xs text-foreground/80 leading-relaxed">
+            <p>大考成绩按三档评级，计入所在周的考试奖励：</p>
+            <div className="space-y-1.5">
+              <Tier rank="加分（满足任一：得分率≥90% / 最高分 / 排名前3）" reward="+¥25" highlight />
+              <Tier rank="不变（默认档位）" reward="¥0" />
+              <Tier rank="扣分（满足任一：得分率<75% / 排名第9名及以后）" reward="-¥25" />
+            </div>
+            <div className="bg-muted/10 rounded-md p-3 space-y-1.5 mt-2">
+              <Rule text="系统根据成绩自动建议档位，需人工确认" />
+              <Rule text="确认前大考不影响考试奖励计算" />
+              <Rule text="大考加分可使当周考试奖励超过 ¥100" />
+            </div>
+            <p className="text-muted-foreground text-[10px] pt-1">
+              期中/期末考试使用独立规则，此处暂不涉及。
             </p>
           </CardContent>
         </Card>
@@ -75,16 +97,19 @@ export default function RulesPage() {
         {/* 月末排名 */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">月末排名挑战</CardTitle>
+            <CardTitle className="text-sm">月度排名奖</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-xs text-foreground/80 leading-relaxed">
-            <p>月底按班级排名发放额外奖金：</p>
+            <p>月底按班级排名线性计算，范围 <span className="font-mono font-semibold">-¥200 ~ +¥200</span>：</p>
             <div className="space-y-1.5">
-              <Tier rank="前 10 名" reward="¥200" highlight />
-              <Tier rank="第 11–20 名" reward="¥100" />
-              <Tier rank="第 21–30 名" reward="¥50" />
-              <Tier rank="30 名之后" reward="¥0" />
+              <Tier rank="第 1 名" reward="+¥200" highlight />
+              <Tier rank="第 10 名" reward="+¥10" />
+              <Tier rank="第 11 名" reward="-¥10" />
+              <Tier rank="第 20 名" reward="-¥200" />
             </div>
+            <p className="text-muted-foreground text-[10px] pt-1">
+              排名越靠前奖励越高，中间名次接近 ¥0，靠后则扣钱。按全班 20 人线性计算，四舍五入到 ¥5。
+            </p>
           </CardContent>
         </Card>
 
