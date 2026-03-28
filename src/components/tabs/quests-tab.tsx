@@ -2,6 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/lib/supabase";
+import { PLAYER_ID } from "@/lib/queries";
 import type { WeeklyQuestState } from "@/lib/types";
 
 export function QuestsTab({ weeklyQuests, currentWeekIndex }: {
@@ -9,6 +11,17 @@ export function QuestsTab({ weeklyQuests, currentWeekIndex }: {
   currentWeekIndex: number;
 }) {
   const currentWeek = weeklyQuests[currentWeekIndex];
+
+  const handleCheckIn = async (habitType: '运动' | '阅读') => {
+    const today = new Date().toISOString().split('T')[0];
+    const { error } = await supabase.from('habit_logs').upsert([{
+      player_id: PLAYER_ID,
+      log_date: today,
+      habit_type: habitType,
+    }], { onConflict: 'player_id,log_date,habit_type' });
+
+    if (error) alert("打卡失败: " + error.message);
+  };
 
   return (
     <div className="space-y-6">
@@ -28,8 +41,8 @@ export function QuestsTab({ weeklyQuests, currentWeekIndex }: {
         const isCurrent = weekIdx === currentWeekIndex;
         const isPast = weekIdx < currentWeekIndex;
         const quests = [
-          { key: 'exercise', label: '周末运动', type: '运动', earned: week.exercise.earned, status: week.exercise.status },
-          { key: 'reading', label: '周末阅读', type: '阅读', earned: week.reading.earned, status: week.reading.status },
+          { key: 'exercise' as const, label: '周末运动', type: '运动' as const, earned: week.exercise.earned, status: week.exercise.status },
+          { key: 'reading' as const, label: '周末阅读', type: '阅读' as const, earned: week.reading.earned, status: week.reading.status },
         ];
 
         return (
@@ -44,39 +57,60 @@ export function QuestsTab({ weeklyQuests, currentWeekIndex }: {
             </div>
 
             <div className="grid grid-cols-2 gap-3 mb-4">
-              {quests.map(q => (
-                <Card key={q.key} className={`shadow-none border-border/50 ${q.status === 'completed' ? 'bg-primary/5' : ''}`}>
-                  <CardHeader className="p-3 pb-1">
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-sm font-medium">{q.label}</CardTitle>
-                      <Badge
-                        variant={q.status === 'completed' ? 'default' : 'outline'}
-                        className={`text-[9px] px-1.5 py-0 h-4 ${q.status === 'completed' ? 'bg-primary/20 text-primary' : 'text-muted-foreground'}`}
-                      >
-                        {q.status === 'completed' ? '已完成' : isPast ? '未完成' : '待打卡'}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-3 pt-1">
-                    <p className="text-[10px] text-muted-foreground mb-2">
-                      {q.status === 'completed'
-                        ? `${q.type}打卡已确认`
-                        : isCurrent
-                          ? `周末完成${q.type}打卡即可获得奖励`
-                          : isPast
-                            ? `本周未完成${q.type}打卡`
-                            : `等待本周到来`
-                      }
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className={`text-lg font-mono font-semibold ${q.status === 'completed' ? 'text-primary' : 'text-muted-foreground/40'}`}>
-                        &yen;{q.earned}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">/ &yen;50</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              {quests.map(q => {
+                const canCheckIn = isCurrent && q.status !== 'completed';
+                const today = new Date();
+                const isWeekend = today.getDay() === 0 || today.getDay() === 6;
+
+                return (
+                  <Card key={q.key} className={`shadow-none border-border/50 ${q.status === 'completed' ? 'bg-primary/5' : ''}`}>
+                    <CardHeader className="p-3 pb-1">
+                      <div className="flex justify-between items-start">
+                        <CardTitle className="text-sm font-medium">{q.label}</CardTitle>
+                        <Badge
+                          variant={q.status === 'completed' ? 'default' : 'outline'}
+                          className={`text-[9px] px-1.5 py-0 h-4 ${q.status === 'completed' ? 'bg-primary/20 text-primary' : 'text-muted-foreground'}`}
+                        >
+                          {q.status === 'completed' ? '已完成' : isPast ? '未完成' : '待打卡'}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-3 pt-1">
+                      <p className="text-[10px] text-muted-foreground mb-2">
+                        {q.status === 'completed'
+                          ? `${q.type}打卡已确认`
+                          : isCurrent
+                            ? isWeekend
+                              ? `今天是周末，点击下方按钮完成${q.type}打卡`
+                              : `周末完成${q.type}打卡即可获得奖励`
+                            : isPast
+                              ? `本周未完成${q.type}打卡`
+                              : `等待本周到来`
+                        }
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className={`text-lg font-mono font-semibold ${q.status === 'completed' ? 'text-primary' : 'text-muted-foreground/40'}`}>
+                          &yen;{q.earned}
+                        </span>
+                        {canCheckIn ? (
+                          <button
+                            onClick={() => handleCheckIn(q.type)}
+                            className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 ${
+                              isWeekend
+                                ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                                : 'bg-muted/50 text-muted-foreground border border-border/50'
+                            }`}
+                          >
+                            {isWeekend ? '立即打卡' : '非周末'}
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground">/ &yen;50</span>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         );

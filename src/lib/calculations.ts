@@ -53,13 +53,9 @@ export function calculateWeeklyQuests(
     academicsThisWeek.forEach(a => {
       const score = Number(a.score);
       const isBelowThreshold = a.subject === '英语' ? score < 90 : score < 95;
-      if (a.is_retest || score < 60 || isBelowThreshold) {
+      if (a.is_retest || isBelowThreshold) {
         strikes++;
-        const reason = a.is_retest
-          ? '重考惩扣'
-          : score < 60
-            ? '不及格惩扣'
-            : '分值不达标';
+        const reason = a.is_retest ? '重考惩扣' : '分值不达标';
         deductions.push({ reason: `${a.subject}: ${reason}`, amount: 15 });
       }
     });
