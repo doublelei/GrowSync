@@ -565,8 +565,8 @@ export default function RecordsPage() {
 // Each week = one circle. Left half = 运动, right half = 阅读.
 import type { HabitLog } from "@/lib/types";
 
-const RING_SIZE = 32;
-const RING_STROKE = 4;
+const RING_SIZE = 40;
+const RING_STROKE = 5;
 const EXERCISE_COLOR = "oklch(0.85 0.25 145)"; // cyber green
 const READING_COLOR = "oklch(0.8 0.2 190)";    // teal
 const EMPTY_COLOR = "oklch(0.25 0.05 280)";    // dark muted
@@ -684,23 +684,21 @@ function HabitWeeklyRings({ habitLogs }: { habitLogs: HabitLog[] }) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto pb-1">
-          <div className="inline-flex gap-2">
-            {weeks.map((week) => {
-              const hasExercise = week.dates.some((d) => exerciseDates.has(d));
-              const hasReading = week.dates.some((d) => readingDates.has(d));
+        <div className="grid grid-cols-4 gap-3 place-items-center">
+          {weeks.map((week) => {
+            const hasExercise = week.dates.some((d) => exerciseDates.has(d));
+            const hasReading = week.dates.some((d) => readingDates.has(d));
 
-              return (
-                <HabitRing
-                  key={week.monStr}
-                  exercise={hasExercise}
-                  reading={hasReading}
-                  label={week.label}
-                  isFuture={week.isFuture}
-                />
-              );
-            })}
-          </div>
+            return (
+              <HabitRing
+                key={week.monStr}
+                exercise={hasExercise}
+                reading={hasReading}
+                label={week.label}
+                isFuture={week.isFuture}
+              />
+            );
+          })}
         </div>
       </CardContent>
     </Card>
