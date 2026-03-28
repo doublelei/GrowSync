@@ -27,3 +27,27 @@ export const MONTHLY_RANK_TIERS = [
 // ── Habit Types ──
 export const HABIT_TYPES = ['运动', '阅读'] as const;
 export type HabitType = (typeof HABIT_TYPES)[number];
+
+// ── Timezone ──
+export const TIMEZONE = 'Asia/Shanghai';
+
+/** Current moment as a Date whose local methods reflect Beijing time. */
+export function nowBeijing(): Date {
+  const utc = new Date();
+  const beijing = new Date(utc.toLocaleString('en-US', { timeZone: TIMEZONE }));
+  return beijing;
+}
+
+/** Today's date string in Beijing time: "YYYY-MM-DD" */
+export function todayBeijing(): string {
+  const d = nowBeijing();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+/** Current month string in Beijing time: "YYYY-MM" */
+export function currentMonthBeijing(): string {
+  return todayBeijing().slice(0, 7);
+}

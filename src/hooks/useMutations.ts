@@ -1,7 +1,7 @@
 // src/hooks/useMutations.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { PLAYER_ID } from '@/lib/constants';
+import { PLAYER_ID, todayBeijing } from '@/lib/constants';
 import { queryKeys } from '@/lib/query-client';
 
 function useInvalidate(monthId: string) {
@@ -19,7 +19,7 @@ export function useHabitCheckIn(monthId: string) {
   const inv = useInvalidate(monthId);
   return useMutation({
     mutationFn: async (habitType: '运动' | '阅读') => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = todayBeijing();
       const { error } = await supabase.from('habit_logs').upsert([{
         player_id: PLAYER_ID,
         log_date: today,

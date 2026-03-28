@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { HABIT_REWARD_PER_TYPE } from "@/lib/constants";
+import { HABIT_REWARD_PER_TYPE, nowBeijing } from "@/lib/constants";
 import { useHabitCheckIn } from "@/hooks/useMutations";
 import type { WeeklyQuestState } from "@/lib/types";
 
@@ -23,7 +23,7 @@ export function QuestsTab({ weeklyQuests, currentWeekIndex, monthId }: {
     { key: 'reading', label: '周末阅读', type: '阅读' as const, earned: week.reading.earned, status: week.reading.status },
   ];
 
-  const today = new Date();
+  const today = nowBeijing();
   const isWeekend = today.getDay() === 0 || today.getDay() === 6;
 
   return (

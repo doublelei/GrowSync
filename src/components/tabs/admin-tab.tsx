@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { SUBJECTS, HABIT_TYPES } from "@/lib/constants";
+import { SUBJECTS, HABIT_TYPES, todayBeijing, currentMonthBeijing } from "@/lib/constants";
 import {
   useInsertMicroTest,
   useInsertMajorExam,
@@ -171,7 +171,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
         <CardContent className="p-4">
           <form ref={microTestForm} onSubmit={handleMicroTestSubmit} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <input name="date" type="date" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-xs text-foreground focus:outline-none" required defaultValue={new Date().toISOString().split('T')[0]} />
+              <input name="date" type="date" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-xs text-foreground focus:outline-none" required defaultValue={todayBeijing()} />
               <select name="subject" className="w-full bg-background border border-border/50 rounded px-1 py-1.5 text-xs text-foreground focus:outline-none">
                 {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -198,7 +198,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
         <CardContent className="p-4">
           <form ref={majorExamForm} onSubmit={handleMajorExamSubmit} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
-               <input name="date" type="date" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" required defaultValue={new Date().toISOString().split('T')[0]} />
+               <input name="date" type="date" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" required defaultValue={todayBeijing()} />
                <select name="subject" className="w-full bg-background border border-border/50 rounded px-1 py-1.5 text-xs focus:outline-none">
                 {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -225,7 +225,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
           </CardHeader>
           <CardContent className="p-3">
              <form ref={monthlyPointForm} onSubmit={handleMonthlyPointSubmit} className="space-y-2">
-               <input name="month" type="month" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" required defaultValue={new Date().toISOString().slice(0, 7)} />
+               <input name="month" type="month" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" required defaultValue={currentMonthBeijing()} />
                <div className="flex gap-2">
                  <input name="points" type="number" placeholder="总分" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" required />
                  <input name="rank" type="number" placeholder="班排名" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" />
@@ -242,7 +242,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
           </CardHeader>
           <CardContent className="p-3">
              <form ref={habitForm} onSubmit={handleHabitSubmit} className="space-y-2">
-               <input name="date" type="date" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" required defaultValue={new Date().toISOString().split('T')[0]} />
+               <input name="date" type="date" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" required defaultValue={todayBeijing()} />
                <select name="type" className="w-full bg-background border border-border/50 rounded px-1 py-1.5 text-xs focus:outline-none" required>
                  {HABIT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                </select>

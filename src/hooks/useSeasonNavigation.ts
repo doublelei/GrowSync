@@ -1,14 +1,22 @@
 // src/hooks/useSeasonNavigation.ts
 import { useState, useCallback, useMemo } from 'react';
 import { getCurrentMonthInfo, getCurrentWeekIndex } from '@/lib/date-utils';
+import { nowBeijing } from '@/lib/constants';
+
+function formatDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
 export function useSeasonNavigation() {
-  const [targetDate, setTargetDate] = useState(new Date());
+  const [targetDate, setTargetDate] = useState(nowBeijing);
 
   const seasonInfo = useMemo(() => getCurrentMonthInfo(targetDate), [targetDate]);
 
   const currentWeekIndex = useMemo(
-    () => getCurrentWeekIndex(seasonInfo.weeks, new Date()),
+    () => getCurrentWeekIndex(seasonInfo.weeks, nowBeijing()),
     [seasonInfo.weeks],
   );
 
@@ -29,16 +37,16 @@ export function useSeasonNavigation() {
   }, []);
 
   const goToCurrentMonth = useCallback(() => {
-    setTargetDate(new Date());
+    setTargetDate(nowBeijing());
   }, []);
 
   const seasonRange = useMemo(() => {
     const { monthId, weeks } = seasonInfo;
     const start = weeks.length > 0
-      ? weeks[0].startDate.toISOString().split('T')[0]
+      ? formatDate(weeks[0].startDate)
       : `${monthId}-01`;
     const end = weeks.length > 0
-      ? weeks[weeks.length - 1].endDate.toISOString().split('T')[0]
+      ? formatDate(weeks[weeks.length - 1].endDate)
       : `${monthId}-28`;
     return { start, end };
   }, [seasonInfo]);

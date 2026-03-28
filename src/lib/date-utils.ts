@@ -1,4 +1,5 @@
 import { WeekPeriod } from './types';
+import { nowBeijing } from './constants';
 
 function formatDateLabel(d: Date): string {
   return `${d.getMonth() + 1}月${d.getDate()}日`;
@@ -19,7 +20,7 @@ function formatDateLabel(d: Date): string {
  *
  * March 1 (Sun) belongs to February's last week (Feb 23 Mon), not March.
  */
-export function getCurrentMonthInfo(targetDate: Date = new Date()) {
+export function getCurrentMonthInfo(targetDate: Date = nowBeijing()) {
   const year = targetDate.getFullYear();
   const month = targetDate.getMonth();
 
@@ -61,7 +62,7 @@ export function getCurrentMonthInfo(targetDate: Date = new Date()) {
  * Returns the index of the week that contains `now`.
  * Falls back to the last week if `now` is past all weeks.
  */
-export function getCurrentWeekIndex(weeks: WeekPeriod[], now: Date = new Date()): number {
+export function getCurrentWeekIndex(weeks: WeekPeriod[], now: Date = nowBeijing()): number {
   for (let i = 0; i < weeks.length; i++) {
     const endOfDay = new Date(weeks[i].endDate);
     endOfDay.setHours(23, 59, 59, 999);
