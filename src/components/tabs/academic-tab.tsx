@@ -3,20 +3,23 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { AcademicRecord, HabitLog, MonthlySchoolPoint, WeeklyQuestState } from "@/lib/types";
+import type { AcademicRecord, HabitLog, MonthlySchoolPoint, WeeklyQuestState, WeekPeriod } from "@/lib/types";
+import { getWeekIndexForDate } from "@/lib/date-utils";
 
 export function AcademicTab({
   records = [],
   habitLogs = [],
   monthlyPoints = [],
   weeklyQuests = [],
-  currentWeekIndex = 0
+  currentWeekIndex = 0,
+  weeks = []
 }: {
   records?: AcademicRecord[];
   habitLogs?: HabitLog[];
   monthlyPoints?: MonthlySchoolPoint[];
   weeklyQuests?: WeeklyQuestState[];
   currentWeekIndex?: number;
+  weeks?: WeekPeriod[];
 }) {
   const [subject, setSubject] = useState("英语");
 
@@ -89,6 +92,8 @@ export function AcademicTab({
                const score = Number(record.score);
                const isBelowThreshold = record.subject === '英语' ? score < 90 : score < 95;
                const isStrike = record.event_type === 'micro_test' && (record.is_retest || score < 60 || isBelowThreshold);
+               const weekIdx = getWeekIndexForDate(weeks, new Date(record.event_date));
+               const weekLabel = weekIdx >= 0 ? `W${weekIdx + 1}` : null;
 
                return (
                 <div key={record.id} className="p-4 flex items-center justify-between">
@@ -98,7 +103,10 @@ export function AcademicTab({
                       {record.event_type === 'major_exam' && <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 bg-primary/20 text-primary hover:bg-primary/30">大考</Badge>}
                       {isStrike && <Badge variant="destructive" className="text-[9px] px-1 py-0 h-4">Strike</Badge>}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1.5">{record.event_date}</div>
+                    <div className="text-xs text-muted-foreground mt-1.5 flex items-center gap-2">
+                      <span>{record.event_date}</span>
+                      {weekLabel && <span className="text-[9px] bg-muted/40 border border-border/40 px-1 py-0 rounded-sm">{weekLabel}</span>}
+                    </div>
                   </div>
                   <div className="text-right flex flex-col items-end">
                     <div className={`text-lg font-mono font-semibold ${isStrike ? 'text-destructive' : 'text-foreground'}`}>

@@ -34,21 +34,21 @@ export function useGrowSyncData() {
     setLoading(true);
     const { monthId, weeks } = getCurrentMonthInfo();
 
-    // Compute month date boundaries for query filtering
-    const monthStart = `${monthId}-01`;
-    const lastDay = new Date(
-      Number(monthId.slice(0, 4)),
-      Number(monthId.slice(5, 7)),
-      0,
-    ).getDate();
-    const monthEnd = `${monthId}-${String(lastDay).padStart(2, '0')}`;
+    // Query range covers the full season: first Monday to last Sunday
+    // The last week's Sunday may overflow into the next month
+    const seasonStart = weeks.length > 0
+      ? weeks[0].startDate.toISOString().split('T')[0]
+      : `${monthId}-01`;
+    const seasonEnd = weeks.length > 0
+      ? weeks[weeks.length - 1].endDate.toISOString().split('T')[0]
+      : `${monthId}-28`;
 
     const [txRes, proofsRes, academicRes, pointsRes, habitsRes] = await Promise.all([
       fetchTransactions(),
       fetchQuestProofs(),
-      fetchAcademicRecords(monthStart, monthEnd),
+      fetchAcademicRecords(seasonStart, seasonEnd),
       fetchMonthlyPoints(monthId),
-      fetchHabitLogs(monthStart, monthEnd),
+      fetchHabitLogs(seasonStart, seasonEnd),
     ]);
 
     const transactions = (txRes.data ?? []) as Transaction[];

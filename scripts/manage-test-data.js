@@ -32,10 +32,9 @@ async function seedData() {
   // Covers: partial week, normal pass, threshold edge, below threshold,
   //         retest, fail (<60), multi-strike week, empty week
   const microTests = [
-    // Partial week (3/1 Sun) — test that partial week captures data
-    { player_id: P, event_date: '2026-03-01', event_type: 'micro_test', subject: '英语', score: 88, max_score: 100, notes: '部分周测试：英语<90 应触发strike' },
+    // 3/1 (Sun) belongs to February's last week — NOT in March season
 
-    // Week 1 (3/2-3/8) — clean week, all pass
+    // Week 1 (3/2 Mon - 3/8 Sun) — clean week, all pass
     { player_id: P, event_date: '2026-03-03', event_type: 'micro_test', subject: '英语', score: 95, max_score: 100 },
     { player_id: P, event_date: '2026-03-04', event_type: 'micro_test', subject: '数学', score: 98, max_score: 100 },
     { player_id: P, event_date: '2026-03-05', event_type: 'micro_test', subject: '语文', score: 96, max_score: 100 },
@@ -56,7 +55,7 @@ async function seedData() {
     { player_id: P, event_date: '2026-03-26', event_type: 'micro_test', subject: '英语', score: 75, max_score: 100, is_retest: true, notes: '重测成绩' },
     { player_id: P, event_date: '2026-03-27', event_type: 'micro_test', subject: '语文', score: 97, max_score: 100 },
 
-    // Week 5 (3/30-3/31) — retest only
+    // Week 5 (3/30 Mon - 4/5 Sun) — retest only, week extends into April
     { player_id: P, event_date: '2026-03-30', event_type: 'micro_test', subject: '数学', score: 91, max_score: 100, is_retest: true },
   ];
 
@@ -101,12 +100,14 @@ async function seedData() {
 
     // Week 3: empty — no habits at all → ¥0
 
-    // Week 4: both weekend habits → ¥100
+    // Week 4 (3/23-3/29): both weekend habits → ¥100
     { player_id: P, log_date: '2026-03-26', habit_type: '阅读' },  // Thu (weekday, no reward)
     { player_id: P, log_date: '2026-03-28', habit_type: '运动' },  // Sat
     { player_id: P, log_date: '2026-03-29', habit_type: '阅读' },  // Sun
 
-    // Week 5: no weekend days (Mon-Tue only) → ¥0
+    // Week 5 (3/30-4/5): weekend is 4/4-4/5, can check in then
+    { player_id: P, log_date: '2026-04-04', habit_type: '运动' },  // Sat (in April but belongs to March W5)
+    { player_id: P, log_date: '2026-04-05', habit_type: '阅读' },  // Sun
   ];
 
   // ── 4. Monthly School Points ──
@@ -133,15 +134,15 @@ async function seedData() {
   res = await supabase.from('habit_logs').upsert(habits, { onConflict: 'player_id,log_date,habit_type' });
   if (res.error) return console.error("  FAIL:", res.error.message);
 
-  console.log("\nDone! Expected results:");
-  console.log("  Partial (3/1):      Strike 1 (英语88<90)         → ¥35 | habits ¥0");
-  console.log("  Week 1 (3/2-3/8):   Strike 0                     → ¥50 | habits ¥100 (Sat运动+Sun阅读)");
-  console.log("  Week 2 (3/9-3/15):  Strike 3 (不及格+分值不达标+重考) → ¥5  | habits ¥50  (Sat运动 only)");
-  console.log("  Week 3 (3/16-3/22): Strike 0 (empty week)        → ¥50 | habits ¥0");
-  console.log("  Week 4 (3/23-3/29): Strike 3 (数学+理综不达标+重考)  → ¥5  | habits ¥100 (Sat运动+Sun阅读)");
-  console.log("  Week 5 (3/30-3/31): Strike 1 (数学重考)           → ¥35 | habits ¥0");
+  console.log("\nDone! Expected results (Monday-anchored season, 5 weeks):");
+  console.log("  3/1 (Sun) belongs to Feb season — excluded from March");
+  console.log("  Week 1 (3/2-3/8):   Strike 0                      → ¥50 | habits ¥100 (Sat运动+Sun阅读)");
+  console.log("  Week 2 (3/9-3/15):  Strike 3 (不及格+不达标+重考)   → ¥5  | habits ¥50  (Sat运动 only)");
+  console.log("  Week 3 (3/16-3/22): Strike 0 (empty week)         → ¥50 | habits ¥0");
+  console.log("  Week 4 (3/23-3/29): Strike 3 (数学+理综不达标+重考) → ¥5  | habits ¥100 (Sat运动+Sun阅读)");
+  console.log("  Week 5 (3/30-4/5):  Strike 1 (数学重考)           → ¥35 | habits ¥100 (4/4运动+4/5阅读)");
   console.log("  Monthly rank 12 → ¥100");
-  console.log("  Total = ¥400 + ¥250 + ¥180 + ¥100 = ¥930");
+  console.log("  Base ¥400 + Habits ¥350 + Academic ¥145 + Monthly ¥100 = ¥995 / ¥1350");
 }
 
 async function clearData() {

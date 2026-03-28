@@ -66,7 +66,7 @@ export default function Home() {
           </TabsContent>
 
           <TabsContent value="academic">
-            <AcademicTab records={academicRecords} habitLogs={habitLogs} monthlyPoints={monthlyPoints} weeklyQuests={playerData.weeklyQuests} currentWeekIndex={currentWeekIdx} />
+            <AcademicTab records={academicRecords} habitLogs={habitLogs} monthlyPoints={monthlyPoints} weeklyQuests={playerData.weeklyQuests} currentWeekIndex={currentWeekIdx} weeks={weeks} />
           </TabsContent>
 
           <TabsContent value="admin">
