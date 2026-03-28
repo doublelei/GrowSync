@@ -466,7 +466,7 @@ export default function RecordsPage() {
                           <span className="text-[10px] text-muted-foreground">{monthRecords.length} 条</span>
                           <span className="text-[10px] text-muted-foreground">均分 {avgScore}%</span>
                           {strikes > 0 && (
-                            <span className="text-[10px] text-destructive">{strikes} strike</span>
+                            <span className="text-[10px] text-destructive">{strikes} 次扣分</span>
                           )}
                         </div>
                         <ChevronDown className={`size-3.5 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
@@ -491,7 +491,7 @@ export default function RecordsPage() {
                                     <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">大考</Badge>
                                   )}
                                   {isStrike(r) && (
-                                    <Badge variant="destructive" className="text-[9px] px-1 py-0 h-4">Strike</Badge>
+                                    <Badge variant="destructive" className="text-[9px] px-1 py-0 h-4">扣分</Badge>
                                   )}
                                   <span className="text-[10px] text-muted-foreground/60">{r.event_date.slice(5)}</span>
                                 </div>
