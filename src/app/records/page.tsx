@@ -253,18 +253,18 @@ export default function RecordsPage() {
     return groups;
   }, [filteredRecords]);
 
-  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(() => new Set());
+  // Default: expand the newest month
+  const [expandedMonths, setExpandedMonths] = useState<Set<string> | null>(null);
+  const resolvedExpanded = expandedMonths ?? new Set(recordsByMonth[0] ? [recordsByMonth[0].month] : []);
   const toggleMonth = (month: string) => {
     setExpandedMonths((prev) => {
-      const next = new Set(prev);
+      const base = prev ?? new Set(recordsByMonth[0] ? [recordsByMonth[0].month] : []);
+      const next = new Set(base);
       if (next.has(month)) next.delete(month);
       else next.add(month);
       return next;
     });
   };
-
-  // Auto-expand the first (newest) month
-  const firstMonth = recordsByMonth[0]?.month;
 
   // ── Loading state ──
   if (isLoading) {
@@ -449,7 +449,7 @@ export default function RecordsPage() {
             ) : (
               <div className="divide-y divide-border">
                 {recordsByMonth.map(({ month, records: monthRecords }) => {
-                  const isExpanded = expandedMonths.has(month) || month === firstMonth;
+                  const isExpanded = resolvedExpanded.has(month);
                   const avgScore = Math.round(
                     monthRecords.reduce((s, r) => s + (r.score / r.max_score) * 100, 0) / monthRecords.length,
                   );
@@ -568,8 +568,8 @@ import type { HabitLog } from "@/lib/types";
 const RING_SIZE = 40;
 const RING_STROKE = 5;
 const EXERCISE_COLOR = "oklch(0.85 0.25 145)"; // cyber green
-const READING_COLOR = "oklch(0.8 0.2 190)";    // teal
-const EMPTY_COLOR = "oklch(0.25 0.05 280)";    // dark muted
+const READING_COLOR = "oklch(0.7 0.25 290)";   // purple (secondary)
+const EMPTY_COLOR = "oklch(0.35 0.02 280)";    // visible gray
 
 function HabitRing({ exercise, reading, label, isFuture }: {
   exercise: boolean;

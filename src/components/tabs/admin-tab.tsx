@@ -228,13 +228,13 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
               </select>
             </div>
             <div className="flex items-center gap-2">
-              <input name="score" type="number" step="0.5" placeholder="得分" className={`w-1/3 ${inputClass}`} required />
+              <input name="score" type="number" step="0.5" placeholder="得分" className={`flex-1 ${inputClass}`} required />
               <span className="text-muted-foreground text-xs">/</span>
-              <input name="max_score" type="number" defaultValue={100} className={`w-1/3 ${inputClass}`} required />
-              <div className="flex items-center gap-1.5 w-1/3 justify-end pr-2">
-                <input type="checkbox" name="is_retest" id="is_retest" className="w-3 h-3 accent-primary" />
-                <label htmlFor="is_retest" className="text-xs text-muted-foreground cursor-pointer">重考成绩</label>
-              </div>
+              <input name="max_score" type="number" defaultValue={100} className={`flex-1 ${inputClass}`} required />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <input type="checkbox" name="is_retest" id="is_retest" className="w-3.5 h-3.5 accent-primary" />
+              <label htmlFor="is_retest" className="text-xs text-muted-foreground cursor-pointer">重考成绩</label>
             </div>
             <Button type="submit" className="w-full" disabled={insertMicroTest.isPending}>
               {insertMicroTest.isPending ? '提交中...' : '录入'}

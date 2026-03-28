@@ -60,10 +60,10 @@ export default function Home() {
           <div className="flex items-center gap-2 mt-1">
             <button
               onClick={goToPrevMonth}
-              className="text-[10px] text-muted-foreground hover:text-foreground px-1 py-0.5 rounded transition-colors focus:outline-none"
+              className="text-xs text-muted-foreground hover:text-foreground w-7 h-7 flex items-center justify-center rounded-md active:bg-muted/50 transition-colors focus:outline-none"
               aria-label="上个月"
             >
-              ◀
+              ‹
             </button>
             <Badge
               variant="outline"
@@ -74,10 +74,10 @@ export default function Home() {
             </Badge>
             <button
               onClick={goToNextMonth}
-              className="text-[10px] text-muted-foreground hover:text-foreground px-1 py-0.5 rounded transition-colors focus:outline-none"
+              className="text-xs text-muted-foreground hover:text-foreground w-7 h-7 flex items-center justify-center rounded-md active:bg-muted/50 transition-colors focus:outline-none"
               aria-label="下个月"
             >
-              ▶
+              ›
             </button>
           </div>
         </div>
