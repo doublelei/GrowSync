@@ -5,6 +5,7 @@ import { CircularProgress } from "@/components/circular-progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { PlayerData, WeeklyQuestState, AcademicBonusState } from "@/lib/types";
+import { WEEKLY_ACADEMIC_BASE } from "@/lib/constants";
 
 export function DashboardTab({ playerData }: { playerData: PlayerData }) {
   const [showWeekly, setShowWeekly] = useState(false);
@@ -67,7 +68,7 @@ export function DashboardTab({ playerData }: { playerData: PlayerData }) {
                   {showAcademic ? "收起" : "展开"}
                 </button>
               </CardTitle>
-              <div className={`text-xl font-semibold font-mono ${(playerData.studyPoolRemaining / 200) < 0.5 ? "text-destructive" : "text-foreground"}`}>
+              <div className={`text-xl font-semibold font-mono ${playerData.studyPoolTotal > 0 && (playerData.studyPoolRemaining / playerData.studyPoolTotal) < 0.5 ? "text-destructive" : "text-foreground"}`}>
                 &yen;{playerData.studyPoolRemaining} <span className="text-xs text-muted-foreground font-sans font-normal ml-1">/ &yen;{playerData.studyPoolTotal}</span>
               </div>
             </div>
@@ -82,11 +83,13 @@ export function DashboardTab({ playerData }: { playerData: PlayerData }) {
                     <span className="text-[9px] text-muted-foreground/60">{w.period.start} - {w.period.end}</span>
                   </div>
                     <div className="flex items-center gap-3 text-xs font-mono">
-                      {w.deductions.length > 0 && (
-                        <span className="bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-sm font-sans text-[10px]">{w.deductions[0].reason}</span>
-                      )}
-                      <span className={w.remaining === 50 ? "text-foreground" : w.remaining > 0 ? "text-orange-500 font-bold" : "text-destructive font-bold"}>
-                        剩余: &yen;{w.remaining}/50
+                      <div className="flex flex-col items-end gap-0.5">
+                        {w.deductions.map((d, i) => (
+                          <span key={i} className="bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-sm font-sans text-[10px]">{d.reason}</span>
+                        ))}
+                      </div>
+                      <span className={w.remaining === WEEKLY_ACADEMIC_BASE ? "text-foreground" : w.remaining > 0 ? "text-orange-500 font-bold" : "text-destructive font-bold"}>
+                        剩余: &yen;{w.remaining}/{WEEKLY_ACADEMIC_BASE}
                       </span>
                     </div>
                   </div>
@@ -100,8 +103,10 @@ export function DashboardTab({ playerData }: { playerData: PlayerData }) {
           <CardHeader className="p-4 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-medium text-muted-foreground">月末排名挑战</CardTitle>
             <div className="flex items-center gap-2">
-              <div className="text-xl font-semibold font-mono text-muted-foreground flexitems-center">&yen;{playerData.monthlyPoolEarned} <span className="text-xs text-muted-foreground/50 font-sans font-normal ml-1">/ &yen;{playerData.monthlyPoolTotal}</span></div>
-              <Badge variant="outline" className="text-[10px] text-muted-foreground border-border/50 font-normal">未结算</Badge>
+              <div className="text-xl font-semibold font-mono text-muted-foreground flex items-center">&yen;{playerData.monthlyPoolEarned} <span className="text-xs text-muted-foreground/50 font-sans font-normal ml-1">/ &yen;{playerData.monthlyPoolTotal}</span></div>
+              {playerData.monthlyPoolEarned === 0 && (
+                <Badge variant="outline" className="text-[10px] text-muted-foreground border-border/50 font-normal">未结算</Badge>
+              )}
             </div>
           </CardHeader>
         </Card>

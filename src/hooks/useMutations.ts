@@ -1,7 +1,7 @@
 // src/hooks/useMutations.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { PLAYER_ID } from '@/lib/queries';
+import { PLAYER_ID } from '@/lib/constants';
 import { queryKeys } from '@/lib/query-client';
 
 function useInvalidate(monthId: string) {

@@ -7,8 +7,8 @@ import {
   fetchMonthlyPoints,
   fetchTransactions,
   fetchQuestProofs,
-  PLAYER_ID,
 } from '@/lib/queries';
+import { PLAYER_ID } from '@/lib/constants';
 import {
   calculateWeeklyQuests,
   calculateMonthlyPool,

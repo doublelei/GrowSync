@@ -1,6 +1,5 @@
 import { supabase } from './supabase';
-
-const PLAYER_ID = '雷雨声';
+import { PLAYER_ID } from './constants';
 
 export async function fetchAcademicRecords(monthStart: string, monthEnd: string) {
   return supabase
@@ -47,4 +46,3 @@ export async function fetchQuestProofs() {
     .order('created_at', { ascending: false });
 }
 
-export { PLAYER_ID };

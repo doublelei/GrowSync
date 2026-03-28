@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import type { AcademicRecord, HabitLog, MonthlySchoolPoint, WeeklyQuestState, WeekPeriod } from "@/lib/types";
 import { getWeekIndexForDate } from "@/lib/date-utils";
+import { SUBJECTS, STRIKE_THRESHOLD_ENGLISH, STRIKE_THRESHOLD_DEFAULT } from "@/lib/constants";
 
 export function AcademicTab({
   records = [],
@@ -25,7 +26,7 @@ export function AcademicTab({
 
   const currentWeek = weeklyQuests[currentWeekIndex];
 
-  const subjects = ["英语", "数学", "语文", "理综"];
+  const subjects = SUBJECTS;
   const filteredRecords = records
     .filter(r => r.subject === subject)
     .sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
@@ -90,7 +91,8 @@ export function AcademicTab({
           <div className="divide-y divide-border/50">
             {filteredRecords.map((record) => {
                const score = Number(record.score);
-               const isBelowThreshold = record.subject === '英语' ? score < 90 : score < 95;
+               const threshold = record.subject === '英语' ? STRIKE_THRESHOLD_ENGLISH : STRIKE_THRESHOLD_DEFAULT;
+               const isBelowThreshold = score < threshold;
                const isStrike = record.event_type === 'micro_test' && (record.is_retest || isBelowThreshold);
                const weekIdx = getWeekIndexForDate(weeks, new Date(record.event_date));
                const weekLabel = weekIdx >= 0 ? `第${weekIdx + 1}周` : null;

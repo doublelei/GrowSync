@@ -12,6 +12,17 @@ import {
   PendingProofDisplay,
   PlayerData,
 } from './types';
+import {
+  STRIKE_THRESHOLD_ENGLISH,
+  STRIKE_THRESHOLD_DEFAULT,
+  STRIKE_PENALTY,
+  BASE_POOL,
+  HABIT_REWARD_PER_TYPE,
+  WEEKLY_HABIT_CAP,
+  WEEKLY_ACADEMIC_BASE,
+  MONTHLY_RANK_CAP,
+  MONTHLY_RANK_TIERS,
+} from './constants';
 
 // ── Weekly Quest Calculation ──
 
@@ -20,8 +31,10 @@ export function calculateWeeklyQuests(
   habits: HabitLog[],
   academics: AcademicRecord[],
 ): WeeklyQuestState[] {
-  const habitsWithDate = habits.map(h => ({ ...h, dateObj: new Date(h.log_date) }));
-  const academicsWithDate = academics.map(a => ({ ...a, dateObj: new Date(a.event_date) }));
+  // Parse "YYYY-MM-DD" as local midnight (not UTC) to avoid timezone shifts
+  const parseLocal = (s: string) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const habitsWithDate = habits.map(h => ({ ...h, dateObj: parseLocal(h.log_date) }));
+  const academicsWithDate = academics.map(a => ({ ...a, dateObj: parseLocal(a.event_date) }));
 
   return weeks.map((w, idx) => {
     const endOfDay = new Date(w.endDate);
@@ -39,8 +52,8 @@ export function calculateWeeklyQuests(
       h => (h.dateObj.getDay() === 0 || h.dateObj.getDay() === 6) && h.habit_type === '阅读',
     );
 
-    const exerciseEarned = weekendExercise ? 50 : 0;
-    const readingEarned = weekendReading ? 50 : 0;
+    const exerciseEarned = weekendExercise ? HABIT_REWARD_PER_TYPE : 0;
+    const readingEarned = weekendReading ? HABIT_REWARD_PER_TYPE : 0;
 
     // Academic strike system (only micro_tests count — major exams excluded)
     const academicsThisWeek = academicsWithDate.filter(
@@ -52,15 +65,15 @@ export function calculateWeeklyQuests(
 
     academicsThisWeek.forEach(a => {
       const score = Number(a.score);
-      const isBelowThreshold = a.subject === '英语' ? score < 90 : score < 95;
-      if (a.is_retest || isBelowThreshold) {
+      const threshold = a.subject === '英语' ? STRIKE_THRESHOLD_ENGLISH : STRIKE_THRESHOLD_DEFAULT;
+      if (a.is_retest || score < threshold) {
         strikes++;
         const reason = a.is_retest ? '重考惩扣' : '分值不达标';
-        deductions.push({ reason: `${a.subject}: ${reason}`, amount: 15 });
+        deductions.push({ reason: `${a.subject}: ${reason}`, amount: STRIKE_PENALTY });
       }
     });
 
-    const academicPoolRemaining = Math.max(0, 50 - strikes * 15);
+    const academicPoolRemaining = Math.max(0, WEEKLY_ACADEMIC_BASE - strikes * STRIKE_PENALTY);
 
     return {
       week: idx + 1,
@@ -70,8 +83,8 @@ export function calculateWeeklyQuests(
         startDate: w.startDate,
         endDate: w.endDate,
       },
-      exercise: { earned: exerciseEarned, status: exerciseEarned >= 50 ? 'completed' : 'pending' },
-      reading: { earned: readingEarned, status: readingEarned >= 50 ? 'completed' : 'pending' },
+      exercise: { earned: exerciseEarned, status: exerciseEarned >= HABIT_REWARD_PER_TYPE ? 'completed' : 'pending' },
+      reading: { earned: readingEarned, status: readingEarned >= HABIT_REWARD_PER_TYPE ? 'completed' : 'pending' },
       academic: { earned: academicPoolRemaining, strikes, deductions },
     };
   });
@@ -86,9 +99,9 @@ export function calculateMonthlyPool(
   const entry = monthlyPoints.find(p => p.month_id === currentMonthId);
   if (!entry?.rank) return 0;
 
-  if (entry.rank <= 10) return 200;
-  if (entry.rank <= 20) return 100;
-  if (entry.rank <= 30) return 50;
+  for (const tier of MONTHLY_RANK_TIERS) {
+    if (entry.rank <= tier.maxRank) return tier.reward;
+  }
   return 0;
 }
 
@@ -101,17 +114,16 @@ export function aggregatePlayerData(
   weeksCount: number,
   recentLogs: RecentLog[],
 ): PlayerData {
-  const basePool = 400;
   const weeklyPoolEarned = weeklyQuests.reduce(
     (acc, w) => acc + w.exercise.earned + w.reading.earned,
     0,
   );
   const studyPoolRemaining = weeklyQuests.reduce((acc, w) => acc + w.academic.earned, 0);
 
-  const weeklyPoolTotal = weeksCount * 100;
-  const studyPoolTotal = weeksCount * 50;
-  const totalUnlocked = basePool + weeklyPoolEarned + studyPoolRemaining + monthlyPoolEarned;
-  const totalCap = basePool + weeklyPoolTotal + studyPoolTotal + 200;
+  const weeklyPoolTotal = weeksCount * WEEKLY_HABIT_CAP;
+  const studyPoolTotal = weeksCount * WEEKLY_ACADEMIC_BASE;
+  const totalUnlocked = BASE_POOL + weeklyPoolEarned + studyPoolRemaining + monthlyPoolEarned;
+  const totalCap = BASE_POOL + weeklyPoolTotal + studyPoolTotal + MONTHLY_RANK_CAP;
 
   const academicBonus: AcademicBonusState[] = weeklyQuests.map(w => ({
     week: w.week,
@@ -122,13 +134,13 @@ export function aggregatePlayerData(
 
   return {
     name: playerId,
-    basePool,
+    basePool: BASE_POOL,
     weeklyPoolEarned,
     weeklyPoolTotal,
     studyPoolRemaining,
     studyPoolTotal,
     monthlyPoolEarned,
-    monthlyPoolTotal: 200,
+    monthlyPoolTotal: MONTHLY_RANK_CAP,
     totalUnlocked,
     totalCap,
     recentLogs,
