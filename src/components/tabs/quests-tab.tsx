@@ -1,49 +1,90 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { QuestDisplay } from "@/lib/types";
+import type { WeeklyQuestState } from "@/lib/types";
 
-export function QuestsTab({ quests, currentWeek }: { quests: QuestDisplay[], currentWeek: { start: string, end: string, week: number } }) {
+export function QuestsTab({ weeklyQuests, currentWeekIndex }: {
+  weeklyQuests: WeeklyQuestState[];
+  currentWeekIndex: number;
+}) {
+  const currentWeek = weeklyQuests[currentWeekIndex];
+
   return (
-    <div className="space-y-4">
-      <div className="mb-4 p-3 bg-muted/10 border border-border/50 rounded-md flex justify-between items-center">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-xs font-medium">当前考评周期</span>
-          <span className="text-[9px] text-muted-foreground">请在期限内完成打卡</span>
+    <div className="space-y-6">
+      {/* Current week highlight */}
+      {currentWeek && (
+        <div className="mb-2 p-3 bg-muted/10 border border-border/50 rounded-md flex justify-between items-center">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs font-medium">当前考评周期</span>
+            <span className="text-[9px] text-muted-foreground">请在周末完成运动与阅读打卡</span>
+          </div>
+          <span className="text-xs font-mono text-primary font-bold">第 {currentWeek.week} 周 ({currentWeek.period.start} - {currentWeek.period.end})</span>
         </div>
-        <span className="text-xs font-mono text-primary font-bold">第 {currentWeek.week} 周 ({currentWeek.start} - {currentWeek.end})</span>
-      </div>
+      )}
 
-      {quests.map((quest) => (
-        <Card key={quest.id} className="shadow-none border-border/50 relative overflow-hidden">
-          {quest.status === 'under_review' && (
-            <div className="absolute top-0 right-0 w-1.5 h-full bg-orange-500/50"></div>
-          )}
-          <CardHeader className="p-4 pb-2 relative">
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-base font-semibold">{quest.title}</CardTitle>
-                <CardDescription className="text-xs mt-1">{quest.type}任务指标</CardDescription>
-              </div>
-              <Badge variant={quest.status === 'pending' ? 'outline' : 'secondary'} className="text-xs font-normal">
-                {quest.status === 'pending' ? '待执行' : '审核中'}
-              </Badge>
+      {/* All weeks' quests */}
+      {weeklyQuests.map((week, weekIdx) => {
+        const isCurrent = weekIdx === currentWeekIndex;
+        const isPast = weekIdx < currentWeekIndex;
+        const quests = [
+          { key: 'exercise', label: '周末运动', type: '运动', earned: week.exercise.earned, status: week.exercise.status },
+          { key: 'reading', label: '周末阅读', type: '阅读', earned: week.reading.earned, status: week.reading.status },
+        ];
+
+        return (
+          <div key={weekIdx}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`text-xs font-semibold ${isCurrent ? 'text-primary' : 'text-muted-foreground'}`}>
+                第 {week.week} 周
+              </span>
+              <span className="text-[9px] text-muted-foreground">{week.period.start} - {week.period.end}</span>
+              {isCurrent && <Badge className="bg-primary/20 text-primary text-[9px] h-4 px-1.5">本周</Badge>}
+              {isPast && quests.every(q => q.status === 'completed') && <Badge variant="outline" className="text-[9px] h-4 px-1.5 text-muted-foreground">已完成</Badge>}
             </div>
-          </CardHeader>
-          <CardContent className="p-4 pt-2 relative">
-            <p className="text-xs text-muted-foreground mb-5 leading-relaxed">{quest.description}</p>
-            <div className="flex items-center justify-between">
-              <div className="text-lg font-mono font-medium text-foreground">
-                 &yen;{quest.reward}
-              </div>
-              <button disabled={quest.status !== 'pending'} className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-xs font-medium disabled:opacity-50 disabled:bg-muted disabled:text-muted-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50">
-                {quest.status === 'pending' ? '立即上传凭证' : '已提交，等待批复'}
-              </button>
+
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {quests.map(q => (
+                <Card key={q.key} className={`shadow-none border-border/50 ${q.status === 'completed' ? 'bg-primary/5' : ''}`}>
+                  <CardHeader className="p-3 pb-1">
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-sm font-medium">{q.label}</CardTitle>
+                      <Badge
+                        variant={q.status === 'completed' ? 'default' : 'outline'}
+                        className={`text-[9px] px-1.5 py-0 h-4 ${q.status === 'completed' ? 'bg-primary/20 text-primary' : 'text-muted-foreground'}`}
+                      >
+                        {q.status === 'completed' ? '已完成' : isPast ? '未完成' : '待打卡'}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-3 pt-1">
+                    <p className="text-[10px] text-muted-foreground mb-2">
+                      {q.status === 'completed'
+                        ? `${q.type}打卡已确认`
+                        : isCurrent
+                          ? `周末完成${q.type}打卡即可获得奖励`
+                          : isPast
+                            ? `本周未完成${q.type}打卡`
+                            : `等待本周到来`
+                      }
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className={`text-lg font-mono font-semibold ${q.status === 'completed' ? 'text-primary' : 'text-muted-foreground/40'}`}>
+                        &yen;{q.earned}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">/ &yen;50</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          </CardContent>
-        </Card>
-      ))}
+          </div>
+        );
+      })}
+
+      {weeklyQuests.length === 0 && (
+        <div className="p-8 text-center text-xs text-muted-foreground">本赛季暂无周数据</div>
+      )}
     </div>
   );
 }

@@ -78,7 +78,7 @@ export default function Home() {
           </TabsContent>
 
           <TabsContent value="quests">
-            <QuestsTab quests={quests} currentWeek={currentWeekInfo} />
+            <QuestsTab weeklyQuests={playerData.weeklyQuests} currentWeekIndex={currentWeekIdx} />
           </TabsContent>
 
           <TabsContent value="academic">
