@@ -29,7 +29,8 @@ export function useSubmitExerciseProof(monthId: string) {
   return useMutation({
     mutationFn: async (input: ExerciseProofInput) => {
       const today = todayBeijing();
-      const filePath = `${PLAYER_ID}/${today}-${Date.now()}.${input.file.name.split('.').pop()}`;
+      const ext = input.file.name.split('.').pop() || 'jpg';
+      const filePath = `proofs/${today}-${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from('habit-proofs')
