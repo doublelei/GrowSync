@@ -27,12 +27,12 @@ export default function RulesPage() {
             <p>每个月的零花钱由四个部分组成：</p>
             <div className="grid grid-cols-2 gap-2">
               <Pool label="基础社交资金" amount="¥400" desc="每月固定发放" />
-              <Pool label="每周打卡奖金" amount="¥100/周" desc="运动 ¥50 + 阅读 ¥50" />
-              <Pool label="学习表现奖金" amount="¥50/周" desc="满分起步，扣分递减" />
+              <Pool label="每周打卡奖金" amount="¥50/周" desc="运动 ¥25 + 阅读 ¥25" />
+              <Pool label="学习表现奖金" amount="¥100/周" desc="满分起步，扣分递减" />
               <Pool label="月末排名挑战" amount="最高 ¥200" desc="依据班级排名" />
             </div>
             <p className="text-muted-foreground text-[10px]">
-              假设一个月有 4 周，理论月度上限 = 400 + 4×100 + 4×50 + 200 = <span className="font-mono font-semibold text-primary">¥1200</span>
+              假设一个月有 4 周，理论月度上限 = 400 + 4×50 + 4×100 + 200 = <span className="font-mono font-semibold text-primary">¥1200</span>
             </p>
           </CardContent>
         </Card>
@@ -45,9 +45,9 @@ export default function RulesPage() {
           <CardContent className="space-y-2 text-xs text-foreground/80 leading-relaxed">
             <Rule text="每周有两个打卡任务：运动和阅读" />
             <Rule text="只需在周末（周六或周日）完成一次即可" />
-            <Rule text="运动打卡：完成即得 ¥50" />
-            <Rule text="阅读打卡：完成即得 ¥50" />
-            <Rule text="每周最多 ¥100（两项都完成）" />
+            <Rule text="运动打卡：完成即得 ¥25" />
+            <Rule text="阅读打卡：完成即得 ¥25" />
+            <Rule text="每周最多 ¥50（两项都完成）" />
             <p className="text-muted-foreground text-[10px] pt-1">
               打卡需要提交凭证（运动照片 / 阅读归纳），审核通过后生效。
             </p>
@@ -60,14 +60,14 @@ export default function RulesPage() {
             <CardTitle className="text-sm">学习表现奖金</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-xs text-foreground/80 leading-relaxed">
-            <p>每周基础 <span className="font-mono font-semibold">¥50</span>，根据日常小测成绩扣分：</p>
+            <p>每周基础 <span className="font-mono font-semibold">¥100</span>，根据日常小测成绩扣分：</p>
             <div className="bg-muted/10 rounded-md p-3 space-y-1.5">
-              <Rule text="英语小测低于 90 分 → 扣 ¥15" warn />
-              <Rule text="数学/语文/理综小测低于 95 分 → 扣 ¥15" warn />
-              <Rule text="重考的成绩 → 额外扣 ¥15" warn />
+              <Rule text="英语小测低于 90 分 → 扣 ¥20" warn />
+              <Rule text="数学/语文/理综小测低于 95 分 → 扣 ¥20" warn />
+              <Rule text="重考的成绩 → 额外扣 ¥20" warn />
             </div>
             <p className="text-muted-foreground text-[10px] pt-1">
-              每次扣 ¥15，扣完为止（最低 ¥0）。大考成绩不参与扣分计算。
+              每次扣 ¥20，扣完为止（最低 ¥0）。大考成绩不参与扣分计算。
             </p>
           </CardContent>
         </Card>

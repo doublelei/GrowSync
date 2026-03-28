@@ -9,13 +9,13 @@ export type Subject = (typeof SUBJECTS)[number];
 // English has a lower bar (90); all other subjects use 95
 export const STRIKE_THRESHOLD_ENGLISH = 90;
 export const STRIKE_THRESHOLD_DEFAULT = 95;
-export const STRIKE_PENALTY = 15; // ¥ deducted per strike
+export const STRIKE_PENALTY = 20; // ¥ deducted per strike
 
 // ── Pool Amounts ──
 export const BASE_POOL = 400;
-export const HABIT_REWARD_PER_TYPE = 50;   // ¥50 for exercise, ¥50 for reading
-export const WEEKLY_HABIT_CAP = 100;       // HABIT_REWARD_PER_TYPE × 2
-export const WEEKLY_ACADEMIC_BASE = 50;    // ¥50 per week before strikes
+export const HABIT_REWARD_PER_TYPE = 25;   // ¥25 for exercise, ¥25 for reading
+export const WEEKLY_HABIT_CAP = 50;        // HABIT_REWARD_PER_TYPE × 2
+export const WEEKLY_ACADEMIC_BASE = 100;   // ¥100 per week before strikes
 export const MONTHLY_RANK_CAP = 200;
 
 export const MONTHLY_RANK_TIERS = [
