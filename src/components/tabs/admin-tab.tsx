@@ -5,12 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 import type { PlayerData, PendingProofDisplay, AcademicRecord, HabitLog } from "@/lib/types";
 
-export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRecords = [], habitLogs = [] }: {
+export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRecords = [], habitLogs = [], onDataChange }: {
   pendingProofs: PendingProofDisplay[];
   playerData: PlayerData;
   currentWeekNum: number;
   academicRecords?: AcademicRecord[];
   habitLogs?: HabitLog[];
+  onDataChange: () => void;
 }) {
 
   const handleMicroTestSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -48,7 +49,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
       is_retest
     }]);
     if (error) alert("录入失败: " + error.message);
-    else { alert("小测记录已存档！"); (e.currentTarget as HTMLFormElement).reset(); }
+    else { (e.currentTarget as HTMLFormElement).reset(); onDataChange(); }
   };
 
   const handleMajorExamSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -94,7 +95,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
 
     const { error } = await supabase.from('academic_records').insert([record]);
     if (error) alert("录入失败: " + error.message);
-    else { alert("大考报告已存档！"); (e.currentTarget as HTMLFormElement).reset(); }
+    else { (e.currentTarget as HTMLFormElement).reset(); onDataChange(); }
   };
 
   const handleMonthlyPointSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -115,7 +116,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
       notes
     }], { onConflict: 'player_id,month_id' });
     if (error) alert("录入失败: " + error.message);
-    else { alert("月度校内操行分已存档！"); (e.currentTarget as HTMLFormElement).reset(); }
+    else { (e.currentTarget as HTMLFormElement).reset(); onDataChange(); }
   };
 
   const handleHabitSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -132,7 +133,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
       habit_type: type
     }], { onConflict: 'player_id,log_date,habit_type' });
     if (error) alert("录入失败: " + error.message);
-    else { alert("课外打卡已补充存入！"); (e.currentTarget as HTMLFormElement).reset(); }
+    else { (e.currentTarget as HTMLFormElement).reset(); onDataChange(); }
   };
 
   const handleApprove = async (proofId: number, reward: number) => {
@@ -150,7 +151,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
       description: '任务审核通过奖励'
     }]);
 
-    alert("已通过！");
+    onDataChange();
   };
 
   const handleReject = async (proofId: number) => {
@@ -160,13 +161,14 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
       .eq('id', proofId);
 
     if (error) alert("操作失败: " + error.message);
-    else alert("已驳回。");
+    else onDataChange();
   };
 
   const handleDeleteRecord = async (table: string, id: number) => {
     if (!confirm("确认删除这条记录？")) return;
     const { error } = await supabase.from(table).delete().eq('id', id);
     if (error) alert("删除失败: " + error.message);
+    else onDataChange();
   };
 
   return (

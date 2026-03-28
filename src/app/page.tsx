@@ -11,7 +11,7 @@ import { AcademicTab } from "@/components/tabs/academic-tab";
 import { AdminTab } from "@/components/tabs/admin-tab";
 
 export default function Home() {
-  const { data, loading, seasonInfo, goToPrevMonth, goToNextMonth, goToCurrentMonth } = useGrowSyncData();
+  const { data, loading, seasonInfo, goToPrevMonth, goToNextMonth, goToCurrentMonth, reloadData } = useGrowSyncData();
   const { monthStr, weeks } = seasonInfo;
 
   const currentWeekIdx = getCurrentWeekIndex(weeks, new Date());
@@ -78,7 +78,7 @@ export default function Home() {
           </TabsContent>
 
           <TabsContent value="quests">
-            <QuestsTab weeklyQuests={playerData.weeklyQuests} currentWeekIndex={currentWeekIdx} />
+            <QuestsTab weeklyQuests={playerData.weeklyQuests} currentWeekIndex={currentWeekIdx} onDataChange={reloadData} />
           </TabsContent>
 
           <TabsContent value="academic">
@@ -86,7 +86,7 @@ export default function Home() {
           </TabsContent>
 
           <TabsContent value="admin">
-            <AdminTab pendingProofs={pendingProofs} playerData={playerData} currentWeekNum={currentWeekInfo.week} academicRecords={academicRecords} habitLogs={habitLogs} />
+            <AdminTab pendingProofs={pendingProofs} playerData={playerData} currentWeekNum={currentWeekInfo.week} academicRecords={academicRecords} habitLogs={habitLogs} onDataChange={reloadData} />
           </TabsContent>
         </Tabs>
       </main>
