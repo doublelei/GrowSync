@@ -9,16 +9,18 @@ export function AcademicTab({
   records = [],
   habitLogs = [],
   monthlyPoints = [],
-  weeklyQuests = []
+  weeklyQuests = [],
+  currentWeekIndex = 0
 }: {
   records?: AcademicRecord[];
   habitLogs?: HabitLog[];
   monthlyPoints?: MonthlySchoolPoint[];
   weeklyQuests?: WeeklyQuestState[];
+  currentWeekIndex?: number;
 }) {
   const [subject, setSubject] = useState("英语");
 
-  const currentWeek = weeklyQuests[weeklyQuests.length - 1];
+  const currentWeek = weeklyQuests[currentWeekIndex];
 
   const subjects = ["英语", "数学", "语文", "理综"];
   const filteredRecords = records
