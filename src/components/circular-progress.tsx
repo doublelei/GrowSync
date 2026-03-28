@@ -48,7 +48,7 @@ export function CircularProgress({ value, max, size = 260, strokeWidth = 14 }: C
           <span className="text-3xl">&yen;</span>{value}
         </div>
         <div className="text-xs text-muted-foreground mt-1 font-sans font-medium">
-          / &yen;{max} 月度上限
+          / &yen;{max} 本月上限
         </div>
       </div>
     </div>

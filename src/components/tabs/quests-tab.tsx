@@ -15,7 +15,7 @@ export function QuestsTab({ weeklyQuests, currentWeekIndex, monthId }: {
   const week = weeklyQuests[currentWeekIndex];
 
   if (!week) {
-    return <div className="p-8 text-center text-xs text-muted-foreground">本赛季暂无周数据</div>;
+    return <div className="p-8 text-center text-xs text-muted-foreground">本月暂无数据</div>;
   }
 
   const quests = [
@@ -30,8 +30,8 @@ export function QuestsTab({ weeklyQuests, currentWeekIndex, monthId }: {
     <div className="space-y-4">
       <div className="p-3 bg-muted/10 border border-border/50 rounded-md flex justify-between items-center">
         <div className="flex flex-col gap-0.5">
-          <span className="text-xs font-medium">当前考评周期</span>
-          <span className="text-[9px] text-muted-foreground">请在周末完成运动与阅读打卡</span>
+          <span className="text-xs font-medium">本周任务</span>
+          <span className="text-[9px] text-muted-foreground">周末完成运动和阅读各一次即可</span>
         </div>
         <span className="text-xs font-mono text-primary font-bold">第 {week.week} 周 ({week.period.start} - {week.period.end})</span>
       </div>
@@ -55,10 +55,10 @@ export function QuestsTab({ weeklyQuests, currentWeekIndex, monthId }: {
             <CardContent className="p-4 pt-1">
               <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
                 {q.status === 'completed'
-                  ? `${q.type}打卡已确认，¥${q.earned} 已锁定至本周奖金池`
+                  ? `${q.type}打卡完成，¥${q.earned} 已到账`
                   : isWeekend
-                    ? `今天是周末，点击下方按钮完成${q.type}打卡即可获得 ¥${HABIT_REWARD_PER_TYPE} 奖励`
-                    : `周末完成一次${q.type}打卡即可获得 ¥${HABIT_REWARD_PER_TYPE} 奖励`
+                    ? `今天是周末，点击下方按钮完成${q.type}打卡即可获得 ¥${HABIT_REWARD_PER_TYPE}`
+                    : `周末完成一次${q.type}即可获得 ¥${HABIT_REWARD_PER_TYPE}`
                 }
               </p>
               <div className="flex items-center justify-between">

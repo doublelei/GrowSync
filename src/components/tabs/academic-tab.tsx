@@ -38,7 +38,7 @@ export function AcademicTab({
         <div className="grid grid-cols-3 gap-3">
           <Card className="shadow-none border-border/50 bg-primary/5">
             <CardContent className="p-3 text-center">
-              <div className="text-[10px] text-muted-foreground uppercase mb-1">学业表现池</div>
+              <div className="text-[10px] text-muted-foreground uppercase mb-1">考试奖励</div>
               <div className={`text-xl font-mono font-bold ${currentWeek.academic.earned < 50 ? 'text-destructive' : 'text-primary'}`}>
                 &yen;{currentWeek.academic.earned}
               </div>
@@ -84,8 +84,8 @@ export function AcademicTab({
 
       <Card className="shadow-none border-border/50">
         <CardHeader className="p-4 bg-muted/10 border-b border-border/50">
-          <CardTitle className="text-sm font-semibold">{subject} 成绩数据大表</CardTitle>
-          <CardDescription className="text-xs">该科目下所有的历史散卷小测与大考记录</CardDescription>
+          <CardTitle className="text-sm font-semibold">{subject} 成绩记录</CardTitle>
+          <CardDescription className="text-xs">所有小测和大考成绩</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-border/50">
@@ -101,7 +101,7 @@ export function AcademicTab({
                 <div key={record.id} className="p-4 flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{record.exam_name || '日常练测小卷'}</span>
+                      <span className="text-sm font-medium">{record.exam_name || '日常小测'}</span>
                       {record.event_type === 'major_exam' && <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 bg-primary/20 text-primary hover:bg-primary/30">大考</Badge>}
                       {isStrike && <Badge variant="destructive" className="text-[9px] px-1 py-0 h-4">Strike</Badge>}
                     </div>
@@ -132,7 +132,7 @@ export function AcademicTab({
         {/* Habit Logs */}
         <Card className="shadow-none border-border/50">
           <CardHeader className="p-3 bg-muted/10 border-b border-border/50">
-            <CardTitle className="text-xs font-semibold">自律打卡历 (最近)</CardTitle>
+            <CardTitle className="text-xs font-semibold">近期打卡</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
              <div className="divide-y divide-border/50 max-h-48 overflow-y-auto">
@@ -150,7 +150,7 @@ export function AcademicTab({
         {/* Monthly Points */}
         <Card className="shadow-none border-border/50">
           <CardHeader className="p-3 bg-muted/10 border-b border-border/50">
-            <CardTitle className="text-xs font-semibold">月度排名/积分</CardTitle>
+            <CardTitle className="text-xs font-semibold">月度排名</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
              <div className="divide-y divide-border/50 max-h-48 overflow-y-auto">

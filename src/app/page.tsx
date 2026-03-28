@@ -90,10 +90,10 @@ export default function Home() {
       <main className="flex-1 overflow-y-auto w-full p-4 pb-20">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-6 h-10 p-1 bg-muted/50 rounded-md">
-            <TabsTrigger value="dashboard" className="text-xs font-medium rounded-sm">数据大屏</TabsTrigger>
-            <TabsTrigger value="quests" className="text-xs font-medium rounded-sm">任务大厅</TabsTrigger>
-            <TabsTrigger value="academic" className="text-xs font-medium rounded-sm">学业档案</TabsTrigger>
-            <TabsTrigger value="admin" className="text-xs font-medium rounded-sm">管理工具</TabsTrigger>
+            <TabsTrigger value="dashboard" className="text-xs font-medium rounded-sm">总览</TabsTrigger>
+            <TabsTrigger value="quests" className="text-xs font-medium rounded-sm">打卡</TabsTrigger>
+            <TabsTrigger value="academic" className="text-xs font-medium rounded-sm">成绩</TabsTrigger>
+            <TabsTrigger value="admin" className="text-xs font-medium rounded-sm">管理</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard">

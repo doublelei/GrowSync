@@ -165,8 +165,8 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
 
       <Card className="shadow-none border-border/50">
         <CardHeader className="p-4 bg-muted/10 border-b border-border/50">
-          <CardTitle className="text-sm font-semibold">1. 纸条小测快录</CardTitle>
-          <CardDescription className="text-xs">高频录入每日听写散卷分数</CardDescription>
+          <CardTitle className="text-sm font-semibold">1. 录入小测</CardTitle>
+          <CardDescription className="text-xs">记录日常小测成绩</CardDescription>
         </CardHeader>
         <CardContent className="p-4">
           <form ref={microTestForm} onSubmit={handleMicroTestSubmit} className="space-y-3">
@@ -185,15 +185,15 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
                 <label htmlFor="is_retest" className="text-xs text-muted-foreground cursor-pointer">重考成绩</label>
               </div>
             </div>
-            <button type="submit" disabled={insertMicroTest.isPending} className="w-full mt-2 bg-primary/90 text-primary-foreground py-2 rounded-md text-xs font-semibold disabled:opacity-50">{insertMicroTest.isPending ? '提交中...' : '录入小测基础分'}</button>
+            <button type="submit" disabled={insertMicroTest.isPending} className="w-full mt-2 bg-primary/90 text-primary-foreground py-2 rounded-md text-xs font-semibold disabled:opacity-50">{insertMicroTest.isPending ? '提交中...' : '录入'}</button>
           </form>
         </CardContent>
       </Card>
 
       <Card className="shadow-none border-border/50">
         <CardHeader className="p-4 bg-muted/10 border-b border-border/50">
-          <CardTitle className="text-sm font-semibold">2. 单元测 / 大考报告</CardTitle>
-          <CardDescription className="text-xs">完整记录各指标以追踪相对排名进步</CardDescription>
+          <CardTitle className="text-sm font-semibold">2. 录入大考</CardTitle>
+          <CardDescription className="text-xs">记录大考及排名数据</CardDescription>
         </CardHeader>
         <CardContent className="p-4">
           <form ref={majorExamForm} onSubmit={handleMajorExamSubmit} className="space-y-3">
@@ -213,7 +213,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
               <input name="highest_score" type="number" step="0.5" placeholder="最高分(选填)" className="w-1/3 bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" />
               <input name="class_rank" type="number" placeholder="排名(选填)" className="w-1/3 bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" />
             </div>
-            <button type="submit" disabled={insertMajorExam.isPending} className="w-full mt-2 bg-primary/90 text-primary-foreground py-2 rounded-md text-xs font-semibold disabled:opacity-50">{insertMajorExam.isPending ? '提交中...' : '录入大考成绩'}</button>
+            <button type="submit" disabled={insertMajorExam.isPending} className="w-full mt-2 bg-primary/90 text-primary-foreground py-2 rounded-md text-xs font-semibold disabled:opacity-50">{insertMajorExam.isPending ? '提交中...' : '录入'}</button>
           </form>
         </CardContent>
       </Card>
@@ -221,7 +221,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
       <div className="grid grid-cols-2 gap-4">
         <Card className="shadow-none border-border/50">
           <CardHeader className="p-3 bg-muted/10 border-b border-border/50">
-             <CardTitle className="text-xs font-semibold">月底校内积分总结</CardTitle>
+             <CardTitle className="text-xs font-semibold">月度排名</CardTitle>
           </CardHeader>
           <CardContent className="p-3">
              <form ref={monthlyPointForm} onSubmit={handleMonthlyPointSubmit} className="space-y-2">
@@ -231,14 +231,14 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
                  <input name="rank" type="number" placeholder="班排名" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-xs focus:outline-none" />
                </div>
                <input name="notes" type="text" placeholder="评语(选填)" className="w-full bg-background border border-border/50 rounded px-2 py-1.5 text-[10px] focus:outline-none" />
-               <button type="submit" disabled={upsertMonthlyPoints.isPending} className="w-full bg-muted/80 text-foreground py-1.5 rounded-sm text-[10px]">{upsertMonthlyPoints.isPending ? '提交中...' : '提交月底总结'}</button>
+               <button type="submit" disabled={upsertMonthlyPoints.isPending} className="w-full bg-muted/80 text-foreground py-1.5 rounded-sm text-[10px]">{upsertMonthlyPoints.isPending ? '提交中...' : '提交'}</button>
              </form>
           </CardContent>
         </Card>
 
         <Card className="shadow-none border-border/50">
           <CardHeader className="p-3 bg-muted/10 border-b border-border/50">
-             <CardTitle className="text-xs font-semibold">记录丢失补登</CardTitle>
+             <CardTitle className="text-xs font-semibold">补录打卡</CardTitle>
           </CardHeader>
           <CardContent className="p-3">
              <form ref={habitForm} onSubmit={handleHabitSubmit} className="space-y-2">
@@ -246,7 +246,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
                <select name="type" className="w-full bg-background border border-border/50 rounded px-1 py-1.5 text-xs focus:outline-none" required>
                  {HABIT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                </select>
-               <button type="submit" disabled={upsertHabit.isPending} className="w-full bg-muted/80 text-foreground py-1.5 rounded-sm text-[10px] mt-2 block">{upsertHabit.isPending ? '提交中...' : '追加补票'}</button>
+               <button type="submit" disabled={upsertHabit.isPending} className="w-full bg-muted/80 text-foreground py-1.5 rounded-sm text-[10px] mt-2 block">{upsertHabit.isPending ? '提交中...' : '补录'}</button>
              </form>
           </CardContent>
         </Card>
@@ -255,7 +255,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
       {/* Record Management */}
       <Card className="shadow-none border-border/50">
         <CardHeader className="p-4 bg-muted/10 border-b border-border/50">
-          <CardTitle className="text-sm font-semibold">已录入成绩 (本赛季)</CardTitle>
+          <CardTitle className="text-sm font-semibold">本月成绩</CardTitle>
           <CardDescription className="text-xs">点击删除按钮移除错误记录</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
@@ -290,7 +290,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
 
       <Card className="shadow-none border-border/50">
         <CardHeader className="p-4 bg-muted/10 border-b border-border/50">
-          <CardTitle className="text-sm font-semibold">已录入打卡 (本赛季)</CardTitle>
+          <CardTitle className="text-sm font-semibold">本月打卡</CardTitle>
           <CardDescription className="text-xs">点击删除按钮移除错误记录</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
@@ -339,20 +339,20 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
                     disabled={approveProof.isPending}
                     className="flex-1 py-2 bg-primary/10 text-primary border border-primary/20 rounded-md text-xs font-medium hover:bg-primary/20 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
                   >
-                    {approveProof.isPending ? '处理中...' : '予以通过'}
+                    {approveProof.isPending ? '处理中...' : '通过'}
                   </button>
                   <button
                     onClick={() => handleReject(proof.id)}
                     disabled={rejectProof.isPending}
                     className="flex-1 py-2 bg-destructive/10 text-destructive border border-destructive/20 rounded-md text-xs font-medium hover:bg-destructive/20 transition-colors focus:outline-none focus:ring-2 focus:ring-destructive/40 disabled:opacity-50"
                   >
-                    {rejectProof.isPending ? '处理中...' : '驳回重做'}
+                    {rejectProof.isPending ? '处理中...' : '驳回'}
                   </button>
                 </div>
               </div>
             ))}
             {pendingProofs.length === 0 && (
-              <div className="p-6 text-center text-xs text-muted-foreground">干干净净，暂时没有需要审核的内容</div>
+              <div className="p-6 text-center text-xs text-muted-foreground">暂无待审内容</div>
             )}
           </div>
         </CardContent>

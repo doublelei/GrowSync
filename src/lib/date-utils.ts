@@ -52,7 +52,7 @@ export function getCurrentMonthInfo(targetDate: Date = nowBeijing()) {
   const monthId = `${year}-${String(month + 1).padStart(2, '0')}`;
 
   return {
-    monthStr: `${year}年${month + 1}月赛季通行证`,
+    monthStr: `${year}年${month + 1}月`,
     monthId,
     weeks,
   };

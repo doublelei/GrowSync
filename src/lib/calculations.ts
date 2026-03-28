@@ -68,7 +68,7 @@ export function calculateWeeklyQuests(
       const threshold = a.subject === '英语' ? STRIKE_THRESHOLD_ENGLISH : STRIKE_THRESHOLD_DEFAULT;
       if (a.is_retest || score < threshold) {
         strikes++;
-        const reason = a.is_retest ? '重考惩扣' : '分值不达标';
+        const reason = a.is_retest ? '重考扣分' : '未达标';
         deductions.push({ reason: `${a.subject}: ${reason}`, amount: STRIKE_PENALTY });
       }
     });
@@ -175,8 +175,8 @@ export function formatQuestDisplay(proofs: QuestProof[]): QuestDisplay[] {
     status: p.status,
     description:
       p.status === 'pending'
-        ? '点击上传证明以获取本周奖励'
-        : '凭证已提交，请等待管理员复核',
+        ? '上传证明即可领取奖励'
+        : '已提交，等待审核',
   }));
 }
 

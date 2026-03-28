@@ -20,7 +20,7 @@ export function DashboardTab({ playerData }: { playerData: PlayerData }) {
       <div className="space-y-4">
         <Card className="bg-muted/10 border-border/50 shadow-none">
           <CardHeader className="p-4 pb-0 flex flex-row items-center justify-between border-b-0">
-            <CardTitle className="text-sm font-medium">基础社交资金</CardTitle>
+            <CardTitle className="text-sm font-medium">固定零花钱</CardTitle>
             <div className="text-xl font-semibold font-mono text-foreground">&yen;{playerData.basePool}</div>
           </CardHeader>
         </Card>
@@ -29,7 +29,7 @@ export function DashboardTab({ playerData }: { playerData: PlayerData }) {
           <CardHeader className="p-4 pb-2">
             <div className="flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                每周打卡奖金
+                打卡奖励
                 <button onClick={() => setShowWeekly(!showWeekly)} className="text-[10px] bg-muted/50 border border-border px-1.5 py-0.5 rounded text-muted-foreground hover:text-foreground transition-colors outline-none focus:ring-1 focus:ring-primary/50">
                   {showWeekly ? "收起" : "展开"}
                 </button>
@@ -63,7 +63,7 @@ export function DashboardTab({ playerData }: { playerData: PlayerData }) {
           <CardHeader className="p-4 pb-2">
             <div className="flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                学习表现奖金
+                考试奖励
                 <button onClick={() => setShowAcademic(!showAcademic)} className="text-[10px] bg-muted/50 border border-border px-1.5 py-0.5 rounded text-muted-foreground hover:text-foreground transition-colors outline-none focus:ring-1 focus:ring-primary/50">
                   {showAcademic ? "收起" : "展开"}
                 </button>
@@ -89,7 +89,7 @@ export function DashboardTab({ playerData }: { playerData: PlayerData }) {
                         ))}
                       </div>
                       <span className={w.remaining === WEEKLY_ACADEMIC_BASE ? "text-foreground" : w.remaining > 0 ? "text-orange-500 font-bold" : "text-destructive font-bold"}>
-                        剩余: &yen;{w.remaining}/{WEEKLY_ACADEMIC_BASE}
+                        本周剩余: &yen;{w.remaining}/{WEEKLY_ACADEMIC_BASE}
                       </span>
                     </div>
                   </div>
@@ -101,11 +101,11 @@ export function DashboardTab({ playerData }: { playerData: PlayerData }) {
 
         <Card className="bg-muted/5 border-border/30 shadow-none">
           <CardHeader className="p-4 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm font-medium text-muted-foreground">月末排名挑战</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">月度排名奖</CardTitle>
             <div className="flex items-center gap-2">
               <div className="text-xl font-semibold font-mono text-muted-foreground flex items-center">&yen;{playerData.monthlyPoolEarned} <span className="text-xs text-muted-foreground/50 font-sans font-normal ml-1">/ &yen;{playerData.monthlyPoolTotal}</span></div>
               {playerData.monthlyPoolEarned === 0 && (
-                <Badge variant="outline" className="text-[10px] text-muted-foreground border-border/50 font-normal">未结算</Badge>
+                <Badge variant="outline" className="text-[10px] text-muted-foreground border-border/50 font-normal">待公布</Badge>
               )}
             </div>
           </CardHeader>
