@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { BookOpen } from "lucide-react";
 import { useSeasonNavigation } from "@/hooks/useSeasonNavigation";
 import { useSeasonData } from "@/hooks/useSeasonData";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
@@ -9,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 
 import { DashboardTab } from "@/components/tabs/dashboard-tab";
 import { QuestsTab } from "@/components/tabs/quests-tab";
-import { AcademicTab } from "@/components/tabs/academic-tab";
 import { AdminTab } from "@/components/tabs/admin-tab";
 
 export default function Home() {
@@ -36,13 +37,13 @@ export default function Home() {
 
   if (isLoading || !data) {
     return (
-      <div className="h-[100dvh] bg-background flex flex-col items-center justify-center font-mono text-xs uppercase tracking-widest text-muted-foreground animate-pulse">
+      <div className="max-w-md mx-auto w-full h-[100dvh] bg-background flex flex-col items-center justify-center font-mono text-xs uppercase tracking-widest text-muted-foreground animate-pulse shadow-2xl shadow-primary/20">
         Initializing Terminal...
       </div>
     );
   }
 
-  const { playerData, pendingProofs, academicRecords, habitLogs, monthlyPoints } = data;
+  const { playerData, pendingProofs, academicRecords, habitLogs, habitProofs, monthlyPoints } = data;
 
   const cw = weeks[currentWeekIndex];
   const currentWeekInfo = cw
@@ -50,7 +51,7 @@ export default function Home() {
     : { start: '', end: '', week: 1 };
 
   return (
-    <div className="flex flex-col h-full bg-background border-r border-l border-border/50">
+    <div className="max-w-md mx-auto w-full flex flex-col h-full bg-background border-r border-l border-border/50 shadow-2xl shadow-primary/20">
       <header className="px-5 py-4 flex items-center justify-between z-10 sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
@@ -80,7 +81,10 @@ export default function Home() {
             </button>
           </div>
         </div>
-        <div className="text-right">
+        <div className="flex items-center gap-3">
+          <Link href="/records" className="text-muted-foreground hover:text-primary transition-colors" aria-label="学业档案">
+            <BookOpen className="size-[18px]" />
+          </Link>
           <p className="text-xs text-muted-foreground">
             {playerData.name}
           </p>
@@ -89,10 +93,9 @@ export default function Home() {
 
       <main className="flex-1 overflow-y-auto w-full p-4 pb-20">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6 h-10 p-1 bg-muted/50 rounded-md">
+          <TabsList className="grid w-full grid-cols-3 mb-6 h-10 p-1 bg-muted/50 rounded-md">
             <TabsTrigger value="dashboard" className="text-xs font-medium rounded-sm">总览</TabsTrigger>
             <TabsTrigger value="quests" className="text-xs font-medium rounded-sm">打卡</TabsTrigger>
-            <TabsTrigger value="academic" className="text-xs font-medium rounded-sm">成绩</TabsTrigger>
             <TabsTrigger value="admin" className="text-xs font-medium rounded-sm">管理</TabsTrigger>
           </TabsList>
 
@@ -101,15 +104,11 @@ export default function Home() {
           </TabsContent>
 
           <TabsContent value="quests">
-            <QuestsTab weeklyQuests={playerData.weeklyQuests} currentWeekIndex={currentWeekIndex} monthId={monthId} />
-          </TabsContent>
-
-          <TabsContent value="academic">
-            <AcademicTab records={academicRecords} habitLogs={habitLogs} monthlyPoints={monthlyPoints} weeklyQuests={playerData.weeklyQuests} currentWeekIndex={currentWeekIndex} weeks={weeks} />
+            <QuestsTab weeklyQuests={playerData.weeklyQuests} currentWeekIndex={currentWeekIndex} monthId={monthId} habitProofs={habitProofs} />
           </TabsContent>
 
           <TabsContent value="admin">
-            <AdminTab pendingProofs={pendingProofs} playerData={playerData} currentWeekNum={currentWeekInfo.week} academicRecords={academicRecords} habitLogs={habitLogs} monthId={monthId} />
+            <AdminTab pendingProofs={pendingProofs} playerData={playerData} currentWeekNum={currentWeekInfo.week} academicRecords={academicRecords} habitLogs={habitLogs} habitProofs={habitProofs} monthId={monthId} />
           </TabsContent>
         </Tabs>
       </main>

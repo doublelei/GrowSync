@@ -4,6 +4,7 @@ import { queryKeys } from '@/lib/query-client';
 import {
   fetchAcademicRecords,
   fetchHabitLogs,
+  fetchHabitProofs,
   fetchMonthlyPoints,
   fetchTransactions,
   fetchQuestProofs,
@@ -23,6 +24,7 @@ import type {
   AcademicRecord,
   MonthlySchoolPoint,
   HabitLog,
+  HabitProof,
   WeekPeriod,
   GrowSyncData,
 } from '@/lib/types';
@@ -64,6 +66,16 @@ function useMonthlyPoints({ monthId }: SeasonParams) {
   });
 }
 
+function useHabitProofsQuery({ monthId, seasonStart, seasonEnd }: SeasonParams) {
+  return useQuery({
+    queryKey: queryKeys.habitProofs(monthId),
+    queryFn: async () => {
+      const { data } = await fetchHabitProofs(seasonStart, seasonEnd);
+      return (data ?? []) as HabitProof[];
+    },
+  });
+}
+
 function useTransactions() {
   return useQuery({
     queryKey: queryKeys.transactions(),
@@ -87,15 +99,18 @@ function useQuestProofs() {
 export function useSeasonData(params: SeasonParams) {
   const academics = useAcademics(params);
   const habits = useHabits(params);
+  const habitProofsQuery = useHabitProofsQuery(params);
   const monthly = useMonthlyPoints(params);
   const transactions = useTransactions();
   const proofs = useQuestProofs();
 
   const isLoading = academics.isLoading || habits.isLoading ||
-    monthly.isLoading || transactions.isLoading || proofs.isLoading;
+    habitProofsQuery.isLoading || monthly.isLoading ||
+    transactions.isLoading || proofs.isLoading;
 
   const academicRecords = academics.data ?? [];
   const habitLogs = habits.data ?? [];
+  const habitProofs = habitProofsQuery.data ?? [];
   const monthlyPoints = monthly.data ?? [];
   const transactionList = transactions.data ?? [];
   const proofList = proofs.data ?? [];
@@ -111,6 +126,7 @@ export function useSeasonData(params: SeasonParams) {
     playerData,
     academicRecords,
     habitLogs,
+    habitProofs,
     monthlyPoints,
     quests: formatQuestDisplay(proofList),
     pendingProofs: formatPendingProofs(proofList),

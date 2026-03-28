@@ -38,11 +38,47 @@ export async function fetchTransactions() {
     .order('created_at', { ascending: false });
 }
 
+export async function fetchHabitProofs(seasonStart: string, seasonEnd: string) {
+  return supabase
+    .from('habit_proofs')
+    .select('*')
+    .eq('player_id', PLAYER_ID)
+    .gte('log_date', seasonStart)
+    .lte('log_date', seasonEnd)
+    .order('created_at', { ascending: false });
+}
+
 export async function fetchQuestProofs() {
   return supabase
     .from('quest_proofs')
     .select('*')
     .eq('player_id', PLAYER_ID)
     .order('created_at', { ascending: false });
+}
+
+// ── Full-history queries (for /records page) ──
+
+export async function fetchAllAcademicRecords() {
+  return supabase
+    .from('academic_records')
+    .select('*')
+    .eq('player_id', PLAYER_ID)
+    .order('event_date', { ascending: false });
+}
+
+export async function fetchAllHabitLogs() {
+  return supabase
+    .from('habit_logs')
+    .select('*')
+    .eq('player_id', PLAYER_ID)
+    .order('log_date', { ascending: false });
+}
+
+export async function fetchAllMonthlyPoints() {
+  return supabase
+    .from('monthly_school_points')
+    .select('*')
+    .eq('player_id', PLAYER_ID)
+    .order('month_id', { ascending: false });
 }
 

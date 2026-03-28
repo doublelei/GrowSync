@@ -7,6 +7,7 @@ import { queryKeys } from '@/lib/query-client';
 const tableToKeys: Record<string, (monthId: string) => readonly unknown[]> = {
   academic_records: queryKeys.academics,
   habit_logs: queryKeys.habits,
+  habit_proofs: queryKeys.habitProofs,
   monthly_school_points: queryKeys.monthlyPoints,
   transactions: () => queryKeys.transactions(),
   quest_proofs: () => queryKeys.questProofs(),

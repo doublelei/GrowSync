@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SUBJECTS, HABIT_TYPES, todayBeijing, currentMonthBeijing } from "@/lib/constants";
@@ -10,18 +10,19 @@ import {
   useUpsertMonthlyPoints,
   useUpsertHabit,
   useDeleteRecord,
-  useApproveProof,
-  useRejectProof,
+  useApproveHabitProof,
+  useRejectHabitProof,
   checkDuplicateAcademic,
 } from "@/hooks/useMutations";
-import type { PlayerData, PendingProofDisplay, AcademicRecord, HabitLog } from "@/lib/types";
+import type { PlayerData, PendingProofDisplay, AcademicRecord, HabitLog, HabitProof } from "@/lib/types";
 
-export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRecords = [], habitLogs = [], monthId }: {
+export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRecords = [], habitLogs = [], habitProofs = [], monthId }: {
   pendingProofs: PendingProofDisplay[];
   playerData: PlayerData;
   currentWeekNum: number;
   academicRecords?: AcademicRecord[];
   habitLogs?: HabitLog[];
+  habitProofs?: HabitProof[];
   monthId: string;
 }) {
   const microTestForm = useRef<HTMLFormElement>(null);
@@ -34,8 +35,8 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
   const upsertMonthlyPoints = useUpsertMonthlyPoints(monthId);
   const upsertHabit = useUpsertHabit(monthId);
   const deleteRecord = useDeleteRecord(monthId);
-  const approveProof = useApproveProof(monthId);
-  const rejectProof = useRejectProof(monthId);
+  const approveHabitProof = useApproveHabitProof(monthId);
+  const rejectHabitProof = useRejectHabitProof(monthId);
 
   const handleMicroTestSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -139,18 +140,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
     );
   };
 
-  const handleApprove = (proofId: number, reward: number) => {
-    approveProof.mutate(
-      { proofId, reward },
-      { onError: (err) => alert("审批失败: " + err.message) },
-    );
-  };
-
-  const handleReject = (proofId: number) => {
-    rejectProof.mutate(proofId, {
-      onError: (err) => alert("操作失败: " + err.message),
-    });
-  };
+  const pendingHabitProofs = habitProofs.filter(p => p.status === 'pending');
 
   const handleDeleteRecord = (table: string, id: number) => {
     if (!confirm("确认删除这条记录？")) return;
@@ -319,44 +309,99 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
 
        <Card className="shadow-none border-border/50">
         <CardHeader className="p-4 bg-muted/10 border-b border-border/50">
-          <CardTitle className="text-sm font-semibold">待审凭证</CardTitle>
-          <CardDescription className="text-xs">审批任务截图与录音</CardDescription>
+          <CardTitle className="text-sm font-semibold">待审打卡凭证</CardTitle>
+          <CardDescription className="text-xs">审核运动照片和阅读归纳</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-border/50">
-            {pendingProofs.map((proof) => (
-              <div key={proof.id} className="p-4 flex flex-col gap-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="text-sm font-medium">{proof.questTitle}</div>
-                    <div className="text-xs text-muted-foreground mt-1">{proof.player} &middot; {proof.type} &middot; {proof.date}</div>
-                  </div>
-                  <div className="text-lg font-mono font-semibold text-primary">&yen;{proof.reward}</div>
-                </div>
-                <div className="flex gap-2 mt-3">
-                  <button
-                    onClick={() => handleApprove(proof.id, proof.reward)}
-                    disabled={approveProof.isPending}
-                    className="flex-1 py-2 bg-primary/10 text-primary border border-primary/20 rounded-md text-xs font-medium hover:bg-primary/20 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
-                  >
-                    {approveProof.isPending ? '处理中...' : '通过'}
-                  </button>
-                  <button
-                    onClick={() => handleReject(proof.id)}
-                    disabled={rejectProof.isPending}
-                    className="flex-1 py-2 bg-destructive/10 text-destructive border border-destructive/20 rounded-md text-xs font-medium hover:bg-destructive/20 transition-colors focus:outline-none focus:ring-2 focus:ring-destructive/40 disabled:opacity-50"
-                  >
-                    {rejectProof.isPending ? '处理中...' : '驳回'}
-                  </button>
-                </div>
-              </div>
+            {pendingHabitProofs.map((proof) => (
+              <HabitProofReviewItem
+                key={proof.id}
+                proof={proof}
+                onApprove={() => approveHabitProof.mutate(
+                  { id: proof.id, habitType: proof.habit_type, logDate: proof.log_date },
+                  { onError: (err) => alert("审批失败: " + err.message) },
+                )}
+                onReject={() => rejectHabitProof.mutate(proof.id, {
+                  onError: (err) => alert("操作失败: " + err.message),
+                })}
+                approving={approveHabitProof.isPending}
+                rejecting={rejectHabitProof.isPending}
+              />
             ))}
-            {pendingProofs.length === 0 && (
+            {pendingHabitProofs.length === 0 && (
               <div className="p-6 text-center text-xs text-muted-foreground">暂无待审内容</div>
             )}
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function HabitProofReviewItem({ proof, onApprove, onReject, approving, rejecting }: {
+  proof: HabitProof;
+  onApprove: () => void;
+  onReject: () => void;
+  approving: boolean;
+  rejecting: boolean;
+}) {
+  const [showFull, setShowFull] = useState(false);
+
+  return (
+    <div className="p-4 flex flex-col gap-3">
+      <div className="flex justify-between items-start">
+        <div>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-[10px] py-0 h-4 font-normal">{proof.habit_type}</Badge>
+            <span className="text-xs text-muted-foreground">{proof.log_date}</span>
+          </div>
+        </div>
+      </div>
+
+      {proof.proof_type === 'image' && proof.proof_url && (
+        <a href={proof.proof_url} target="_blank" rel="noopener noreferrer">
+          <img
+            src={proof.proof_url}
+            alt="运动凭证"
+            className="w-full max-h-48 object-cover rounded-md border border-border/50 cursor-pointer hover:opacity-90 transition-opacity"
+          />
+        </a>
+      )}
+
+      {proof.proof_type === 'text' && proof.proof_text && (
+        <div className="bg-muted/10 border border-border/50 rounded-md p-3">
+          <p className="text-xs text-foreground/80 leading-relaxed">
+            {showFull ? proof.proof_text : proof.proof_text.slice(0, 60) + (proof.proof_text.length > 60 ? '...' : '')}
+          </p>
+          {proof.proof_text.length > 60 && (
+            <button
+              onClick={() => setShowFull(!showFull)}
+              className="text-[10px] text-primary mt-1 hover:underline"
+            >
+              {showFull ? '收起' : '查看全文'}
+            </button>
+          )}
+          <div className="text-[10px] text-muted-foreground mt-1">{proof.proof_text.length} 字</div>
+        </div>
+      )}
+
+      <div className="flex gap-2">
+        <button
+          onClick={onApprove}
+          disabled={approving}
+          className="flex-1 py-2 bg-primary/10 text-primary border border-primary/20 rounded-md text-xs font-medium hover:bg-primary/20 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+        >
+          {approving ? '处理中...' : '通过'}
+        </button>
+        <button
+          onClick={onReject}
+          disabled={rejecting}
+          className="flex-1 py-2 bg-destructive/10 text-destructive border border-destructive/20 rounded-md text-xs font-medium hover:bg-destructive/20 transition-colors focus:outline-none focus:ring-2 focus:ring-destructive/40 disabled:opacity-50"
+        >
+          {rejecting ? '处理中...' : '驳回'}
+        </button>
+      </div>
     </div>
   );
 }

@@ -55,6 +55,24 @@ export interface HabitLog {
   created_at: string;
 }
 
+export interface HabitProof {
+  id: number;
+  player_id: string;
+  habit_type: '运动' | '阅读';
+  log_date: string;
+  proof_type: 'image' | 'text';
+  proof_url?: string;
+  proof_text?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewed_at?: string;
+  created_at: string;
+}
+
+// ── Filter Types (for /records page) ──
+
+export type TimeRange = 'all' | 'recent3m' | 'custom';
+export type ExamTypeFilter = 'all' | 'micro_test' | 'major_exam';
+
 // ── Computed / Display Types ──
 
 export interface WeekPeriod {
@@ -125,6 +143,7 @@ export interface GrowSyncData {
   playerData: PlayerData;
   academicRecords: AcademicRecord[];
   habitLogs: HabitLog[];
+  habitProofs: HabitProof[];
   monthlyPoints: MonthlySchoolPoint[];
   quests: QuestDisplay[];
   pendingProofs: PendingProofDisplay[];

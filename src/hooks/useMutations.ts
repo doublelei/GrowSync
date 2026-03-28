@@ -9,25 +9,105 @@ function useInvalidate(monthId: string) {
   return {
     academics: () => qc.invalidateQueries({ queryKey: queryKeys.academics(monthId) }),
     habits: () => qc.invalidateQueries({ queryKey: queryKeys.habits(monthId) }),
+    habitProofs: () => qc.invalidateQueries({ queryKey: queryKeys.habitProofs(monthId) }),
     monthlyPoints: () => qc.invalidateQueries({ queryKey: queryKeys.monthlyPoints(monthId) }),
     transactions: () => qc.invalidateQueries({ queryKey: queryKeys.transactions() }),
     questProofs: () => qc.invalidateQueries({ queryKey: queryKeys.questProofs() }),
   };
 }
 
-export function useHabitCheckIn(monthId: string) {
+interface ExerciseProofInput {
+  file: File;
+}
+
+interface ReadingProofInput {
+  text: string;
+}
+
+export function useSubmitExerciseProof(monthId: string) {
   const inv = useInvalidate(monthId);
   return useMutation({
-    mutationFn: async (habitType: '运动' | '阅读') => {
+    mutationFn: async (input: ExerciseProofInput) => {
       const today = todayBeijing();
-      const { error } = await supabase.from('habit_logs').upsert([{
+      const filePath = `${PLAYER_ID}/${today}-${Date.now()}.${input.file.name.split('.').pop()}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('habit-proofs')
+        .upload(filePath, input.file);
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('habit-proofs')
+        .getPublicUrl(filePath);
+
+      const { error } = await supabase.from('habit_proofs').insert([{
         player_id: PLAYER_ID,
+        habit_type: '运动',
         log_date: today,
-        habit_type: habitType,
-      }], { onConflict: 'player_id,log_date,habit_type' });
+        proof_type: 'image',
+        proof_url: urlData.publicUrl,
+        status: 'pending',
+      }]);
       if (error) throw error;
     },
-    onSuccess: () => inv.habits(),
+    onSuccess: () => inv.habitProofs(),
+  });
+}
+
+export function useSubmitReadingProof(monthId: string) {
+  const inv = useInvalidate(monthId);
+  return useMutation({
+    mutationFn: async (input: ReadingProofInput) => {
+      if (input.text.length < 100) throw new Error('阅读归纳至少需要100字');
+
+      const today = todayBeijing();
+      const { error } = await supabase.from('habit_proofs').insert([{
+        player_id: PLAYER_ID,
+        habit_type: '阅读',
+        log_date: today,
+        proof_type: 'text',
+        proof_text: input.text,
+        status: 'pending',
+      }]);
+      if (error) throw error;
+    },
+    onSuccess: () => inv.habitProofs(),
+  });
+}
+
+export function useApproveHabitProof(monthId: string) {
+  const inv = useInvalidate(monthId);
+  return useMutation({
+    mutationFn: async (proof: { id: number; habitType: string; logDate: string }) => {
+      const { error: updateError } = await supabase
+        .from('habit_proofs')
+        .update({ status: 'approved', reviewed_at: new Date().toISOString() })
+        .eq('id', proof.id);
+      if (updateError) throw updateError;
+
+      // Write the actual habit_log so reward calculation picks it up
+      const { error: habitError } = await supabase.from('habit_logs').upsert([{
+        player_id: PLAYER_ID,
+        log_date: proof.logDate,
+        habit_type: proof.habitType,
+      }], { onConflict: 'player_id,log_date,habit_type' });
+      if (habitError) throw habitError;
+    },
+    onSuccess: () => { inv.habitProofs(); inv.habits(); },
+  });
+}
+
+export function useRejectHabitProof(monthId: string) {
+  const inv = useInvalidate(monthId);
+  return useMutation({
+    mutationFn: async (proofId: number) => {
+      const { error } = await supabase
+        .from('habit_proofs')
+        .update({ status: 'rejected', reviewed_at: new Date().toISOString() })
+        .eq('id', proofId);
+      if (error) throw error;
+    },
+    onSuccess: () => inv.habitProofs(),
   });
 }
 
