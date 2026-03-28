@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import { BookOpen, HelpCircle } from "lucide-react";
 import { useSeasonNavigation } from "@/hooks/useSeasonNavigation";
 import { useSeasonData } from "@/hooks/useSeasonData";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
@@ -82,6 +82,9 @@ export default function Home() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <Link href="/rules" className="text-muted-foreground hover:text-primary transition-colors" aria-label="游戏规则">
+            <HelpCircle className="size-[18px]" />
+          </Link>
           <Link href="/records" className="text-muted-foreground hover:text-primary transition-colors" aria-label="学业档案">
             <BookOpen className="size-[18px]" />
           </Link>

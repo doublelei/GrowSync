@@ -316,7 +316,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
                       {r.is_retest && <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5">重测</Badge>}
                     </div>
                     <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                      {r.exam_name || r.event_type} · {r.score}/{r.max_score}
+                      {r.exam_name || (r.event_type === 'micro_test' ? '小测' : r.event_type === 'major_exam' ? '大考' : r.event_type)} · {r.score}/{r.max_score}
                     </div>
                   </div>
                   <button
