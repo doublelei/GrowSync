@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
@@ -21,8 +20,8 @@ import {
 import { suggestRating } from "@/lib/calculations";
 import type { PlayerData, PendingProofDisplay, AcademicRecord, HabitLog, HabitProof, MajorExamRating } from "@/lib/types";
 
-const inputClass = "w-full bg-muted/20 border border-border/50 rounded-md px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50 transition-colors";
-const selectClass = "w-full bg-muted/20 border border-border/50 rounded-md px-2 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 transition-colors";
+const inputClass = "w-full bg-background/50 border border-border/30 rounded-lg px-2.5 py-2 text-xs text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/30 transition-all";
+const selectClass = "w-full bg-background/50 border border-border/30 rounded-lg px-2 py-2 text-xs text-foreground focus:outline-none focus:border-primary/30 transition-all";
 
 function Section({ id, title, description, activeSection, onToggle, children }: {
   id: string;
@@ -34,19 +33,19 @@ function Section({ id, title, description, activeSection, onToggle, children }: 
 }) {
   const isOpen = activeSection === id;
   return (
-    <Card className="shadow-none border-border/50">
+    <div className="glass-card rounded-xl overflow-hidden">
       <button
         onClick={() => onToggle(id)}
-        className="w-full p-4 flex items-center justify-between bg-muted/10 border-b border-border/50 text-left"
+        className="w-full p-4 flex items-center justify-between text-left transition-colors hover:bg-primary/3"
       >
         <div>
           <div className="text-sm font-semibold text-foreground">{title}</div>
-          {description && <div className="text-xs text-muted-foreground mt-0.5">{description}</div>}
+          {description && <div className="text-[10px] text-muted-foreground/50 mt-0.5">{description}</div>}
         </div>
-        <ChevronDown className={`size-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`size-4 text-muted-foreground/50 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
-      {isOpen && <CardContent className="p-4">{children}</CardContent>}
-    </Card>
+      {isOpen && <div className="p-4 pt-0 border-t border-border/20">{children}</div>}
+    </div>
   );
 }
 
@@ -219,15 +218,15 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 stagger-children">
 
       {/* 1. Micro test — always visible */}
-      <Card className="shadow-none border-border/50">
-        <div className="p-4 bg-muted/10 border-b border-border/50">
+      <div className="glass-card rounded-xl overflow-hidden">
+        <div className="p-4 border-b border-border/20">
           <div className="text-sm font-semibold text-foreground">录入小测</div>
-          <div className="text-xs text-muted-foreground mt-0.5">记录日常小测成绩</div>
+          <div className="text-[10px] text-muted-foreground/50 mt-0.5">记录日常小测成绩</div>
         </div>
-        <CardContent className="p-4">
+        <div className="p-4">
           <form ref={microTestForm} onSubmit={handleMicroTestSubmit} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <input name="date" type="date" className={inputClass} required defaultValue={todayBeijing()} />
@@ -248,8 +247,8 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
               {insertMicroTest.isPending ? '提交中...' : '录入'}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* 2. Major exam — collapsible */}
       <Section id="major" title="录入大考" description="记录大考及排名数据" activeSection={activeSection} onToggle={toggleSection}>
@@ -278,12 +277,12 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
 
       {/* 2b. Unrated major exams — rating confirmation */}
       {unratedMajorExams.length > 0 && (
-        <Card className="shadow-none border-primary/30 bg-primary/5">
-          <div className="p-4 bg-primary/10 border-b border-primary/20">
-            <div className="text-sm font-semibold text-foreground">待评级大考</div>
-            <div className="text-xs text-muted-foreground mt-0.5">{unratedMajorExams.length} 条大考成绩等待评级</div>
+        <div className="glass-card rounded-xl overflow-hidden border-primary/20 glow-primary">
+          <div className="p-4 border-b border-primary/15">
+            <div className="text-sm font-semibold text-primary">待评级大考</div>
+            <div className="text-[10px] text-muted-foreground/50 mt-0.5">{unratedMajorExams.length} 条大考成绩等待评级</div>
           </div>
-          <CardContent className="p-4 space-y-3">
+          <div className="p-4 space-y-3">
             {unratedMajorExams.map(record => (
               <ExamRatingCard
                 key={record.id}
@@ -301,8 +300,8 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
                 }}
               />
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* 3. Monthly points + Habit backfill — collapsible, side by side */}
@@ -420,7 +419,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
 
       {/* 5. Pending habit proofs — collapsible */}
       <Section id="proofs" title="待审打卡凭证" description="审核运动照片和阅读归纳" activeSection={activeSection} onToggle={toggleSection}>
-        <div className="divide-y divide-border/50 -mx-4 -mb-4">
+        <div className="divide-y divide-border/20 -mx-4 -mb-4 mt-4">
           {pendingHabitProofs.map((proof) => (
             <HabitProofReviewItem
               key={proof.id}
@@ -496,14 +495,14 @@ function HabitProofReviewItem({ proof, onApprove, onReject, approving, rejecting
         <button
           onClick={onApprove}
           disabled={approving}
-          className="flex-1 py-2 bg-primary/10 text-primary border border-primary/20 rounded-md text-xs font-medium hover:bg-primary/20 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+          className="flex-1 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-semibold hover:bg-primary/15 hover:shadow-[0_0_10px_oklch(0.82_0.22_155/0.15)] transition-all focus:outline-none disabled:opacity-50"
         >
           {approving ? '处理中...' : '通过'}
         </button>
         <button
           onClick={onReject}
           disabled={rejecting}
-          className="flex-1 py-2 bg-destructive/10 text-destructive border border-destructive/20 rounded-md text-xs font-medium hover:bg-destructive/20 transition-colors focus:outline-none focus:ring-2 focus:ring-destructive/40 disabled:opacity-50"
+          className="flex-1 py-2 bg-destructive/10 text-destructive border border-destructive/20 rounded-lg text-xs font-semibold hover:bg-destructive/15 transition-all focus:outline-none disabled:opacity-50"
         >
           {rejecting ? '处理中...' : '驳回'}
         </button>

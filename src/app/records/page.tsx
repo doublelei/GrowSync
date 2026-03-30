@@ -26,13 +26,6 @@ import type {
   AcademicRecord,
 } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardDescription,
-} from "@/components/ui/card";
 
 // ── Subject color mapping (shared between chart and badges) ──
 const SUBJECT_COLORS: Record<string, { chart: string; bg: string; text: string }> = {
@@ -125,10 +118,10 @@ function Pill({
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
         active
-          ? "bg-background shadow-sm text-foreground"
-          : "text-muted-foreground hover:text-foreground"
+          ? "bg-primary/10 text-primary border border-primary/20 shadow-[0_0_8px_oklch(0.82_0.22_155/0.1)]"
+          : "text-muted-foreground/50 hover:text-foreground border border-transparent"
       }`}
     >
       {label}
@@ -139,7 +132,7 @@ function Pill({
 // ── Segmented control wrapper ──
 function SegmentedControl({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-0.5 bg-muted/30 rounded-md p-1">
+    <div className="flex items-center gap-0.5 bg-muted/20 rounded-lg p-1 border border-border/20">
       {children}
     </div>
   );
@@ -269,18 +262,25 @@ export default function RecordsPage() {
   // ── Loading state ──
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto w-full h-[100dvh] bg-background flex flex-col items-center justify-center font-mono text-xs uppercase tracking-widest text-muted-foreground animate-pulse">
-        Loading Records...
+      <div className="max-w-2xl mx-auto w-full h-[100dvh] bg-background flex flex-col items-center justify-center hud-loading">
+        <div className="relative">
+          <div className="size-12 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+        </div>
+        <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.3em] text-primary/50 animate-pulse">
+          Loading
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto w-full flex flex-col min-h-[100dvh] bg-background border-r border-l border-border/50">
+    <div className="max-w-2xl mx-auto w-full flex flex-col min-h-[100dvh] bg-background border-r border-l border-border/30 relative noise">
+      {/* Top gradient */}
+      <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-secondary/5 via-transparent to-transparent pointer-events-none" />
       {/* ── Header ── */}
-      <header className="px-5 py-4 flex items-center justify-between z-10 sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border">
+      <header className="px-5 py-4 flex items-center justify-between z-10 sticky top-0 bg-background/80 backdrop-blur-md border-b border-border/40">
         <div className="flex items-center gap-3">
-          <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
+          <Link href="/" className="text-muted-foreground hover:text-primary transition-all hover:drop-shadow-[0_0_6px_oklch(0.82_0.22_155/0.4)]">
             <ArrowLeft className="size-5" />
           </Link>
           <h1 className="text-lg font-bold tracking-tight text-foreground">
@@ -366,14 +366,17 @@ export default function RecordsPage() {
 
         {/* ── Trend Chart ── */}
         {chartData.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">成绩趋势</CardTitle>
-              <CardDescription className="text-[10px]">
+          <div className="glass-card rounded-xl overflow-hidden">
+            <div className="px-4 pt-4 pb-2">
+              <div className="text-sm font-bold text-foreground flex items-center gap-2">
+                <div className="h-3.5 w-0.5 rounded-full bg-secondary" />
+                成绩趋势
+              </div>
+              <div className="text-[10px] text-muted-foreground/40 mt-0.5 ml-3.5">
                 分数百分比 (%)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+              </div>
+            </div>
+            <div className="px-4 pb-4">
               <ResponsiveContainer width="100%" height={240}>
                 <LineChart data={chartData}>
                   <CartesianGrid
@@ -432,22 +435,25 @@ export default function RecordsPage() {
                   )}
                 </LineChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
         {/* ── Records List (grouped by month, collapsible) ── */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">考试记录</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
+        <div className="glass-card rounded-xl overflow-hidden">
+          <div className="px-4 pt-4 pb-2">
+            <div className="text-sm font-bold text-foreground flex items-center gap-2">
+              <div className="h-3.5 w-0.5 rounded-full bg-primary" />
+              考试记录
+            </div>
+          </div>
+          <div>
             {recordsByMonth.length === 0 ? (
-              <div className="px-4 pb-4 text-center text-muted-foreground text-xs py-8">
+              <div className="px-4 pb-4 text-center text-muted-foreground/50 text-xs py-8">
                 暂无匹配记录
               </div>
             ) : (
-              <div className="divide-y divide-border">
+              <div className="divide-y divide-border/20">
                 {recordsByMonth.map(({ month, records: monthRecords }) => {
                   const isExpanded = resolvedExpanded.has(month);
                   const avgScore = Math.round(
@@ -459,7 +465,7 @@ export default function RecordsPage() {
                     <div key={month}>
                       <button
                         onClick={() => toggleMonth(month)}
-                        className="w-full px-4 py-2.5 flex items-center justify-between bg-muted/5 hover:bg-muted/10 transition-colors"
+                        className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-primary/3 transition-colors"
                       >
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-semibold font-mono">{month}</span>
@@ -469,10 +475,10 @@ export default function RecordsPage() {
                             <span className="text-[10px] text-destructive">{strikes} 次扣分</span>
                           )}
                         </div>
-                        <ChevronDown className={`size-3.5 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                        <ChevronDown className={`size-3.5 text-muted-foreground/50 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
                       </button>
                       {isExpanded && (
-                        <div className="divide-y divide-border/50">
+                        <div className="divide-y divide-border/15">
                           {monthRecords.map((r) => {
                             const colors = SUBJECT_COLORS[r.subject];
                             return (
@@ -511,22 +517,25 @@ export default function RecordsPage() {
                 })}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* ── Habit Weekly Rings ── */}
         <HabitWeeklyRings habitLogs={habitLogs} />
 
         {/* ── Monthly Points ── */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-sm">月度积分</CardTitle>
-            <CardDescription className="text-[10px]">
+        <div className="glass-card rounded-xl overflow-hidden mb-6">
+          <div className="px-4 pt-4 pb-2">
+            <div className="text-sm font-bold text-foreground flex items-center gap-2">
+              <div className="h-3.5 w-0.5 rounded-full bg-muted-foreground/30" />
+              月度积分
+            </div>
+            <div className="text-[10px] text-muted-foreground/40 mt-0.5 ml-3.5">
               {monthlyPoints.length} 个月
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="max-h-64 overflow-y-auto divide-y divide-border">
+            </div>
+          </div>
+          <div>
+            <div className="max-h-64 overflow-y-auto divide-y divide-border/20">
               {monthlyPoints.length === 0 ? (
                 <div className="px-4 py-6 text-center text-muted-foreground text-xs">
                   暂无记录
@@ -554,8 +563,8 @@ export default function RecordsPage() {
                 ))
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -664,12 +673,15 @@ function HabitWeeklyRings({ habitLogs }: { habitLogs: HabitLog[] }) {
   }, []);
 
   return (
-    <Card>
-      <CardHeader>
+    <div className="glass-card rounded-xl overflow-hidden">
+      <div className="px-4 pt-4 pb-2">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-sm">习惯打卡</CardTitle>
-            <CardDescription className="text-[10px]">近 16 周</CardDescription>
+            <div className="text-sm font-bold text-foreground flex items-center gap-2">
+              <div className="h-3.5 w-0.5 rounded-full bg-primary" />
+              习惯打卡
+            </div>
+            <div className="text-[10px] text-muted-foreground/40 mt-0.5 ml-3.5">近 16 周</div>
           </div>
           <div className="flex items-center gap-3 text-[9px] text-muted-foreground">
             <div className="flex items-center gap-1">
@@ -682,8 +694,8 @@ function HabitWeeklyRings({ habitLogs }: { habitLogs: HabitLog[] }) {
             </div>
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div className="px-4 pb-4">
         <div className="grid grid-cols-4 gap-3 place-items-center">
           {weeks.map((week) => {
             const hasExercise = week.dates.some((d) => exerciseDates.has(d));
@@ -700,7 +712,7 @@ function HabitWeeklyRings({ habitLogs }: { habitLogs: HabitLog[] }) {
             );
           })}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
