@@ -118,6 +118,7 @@ interface MicroTestInput {
   score: number;
   max_score: number;
   is_retest: boolean;
+  is_pass_fail: boolean;
 }
 
 export function useInsertMicroTest(monthId: string) {
@@ -132,6 +133,7 @@ export function useInsertMicroTest(monthId: string) {
         score: input.score,
         max_score: input.max_score,
         is_retest: input.is_retest,
+        is_pass_fail: input.is_pass_fail,
       }]);
       if (error) throw error;
     },

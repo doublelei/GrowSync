@@ -39,7 +39,8 @@ const SUBJECT_COLORS: Record<string, { chart: string; bg: string; text: string }
   "英语": { chart: "var(--chart-1)", bg: "bg-[oklch(0.85_0.25_145/0.15)]", text: "text-[oklch(0.85_0.25_145)]" },
   "数学": { chart: "var(--chart-2)", bg: "bg-[oklch(0.6_0.28_290/0.15)]", text: "text-[oklch(0.75_0.2_290)]" },
   "语文": { chart: "var(--chart-3)", bg: "bg-[oklch(0.65_0.25_25/0.15)]", text: "text-[oklch(0.75_0.2_25)]" },
-  "理综": { chart: "var(--chart-4)", bg: "bg-[oklch(0.8_0.2_190/0.15)]", text: "text-[oklch(0.8_0.2_190)]" },
+  "历史": { chart: "var(--chart-4)", bg: "bg-[oklch(0.78_0.15_60/0.15)]",  text: "text-[oklch(0.72_0.15_60)]" },
+  "生物": { chart: "var(--chart-5)", bg: "bg-[oklch(0.78_0.15_195/0.15)]", text: "text-[oklch(0.72_0.15_195)]" },
 };
 const CHART_COLORS = Object.fromEntries(
   Object.entries(SUBJECT_COLORS).map(([k, v]) => [k, v.chart]),
@@ -49,6 +50,7 @@ const CHART_COLORS = Object.fromEntries(
 function isStrike(r: AcademicRecord): boolean {
   if (r.event_type !== "micro_test") return false;
   if (r.is_retest) return true;
+  if (r.is_pass_fail) return Number(r.score) === 0; // Fail = strike
   const threshold =
     r.subject === "英语" ? STRIKE_THRESHOLD_ENGLISH : STRIKE_THRESHOLD_DEFAULT;
   return Number(r.score) < threshold;
@@ -210,23 +212,29 @@ export default function RecordsPage() {
     return records;
   }, [academicRecords, selectedSubject, activeSemester, examType]);
 
-  // ── Chart data (sorted ascending) ──
-  const chartData = useMemo(() => {
-    const sorted = [...filteredRecords].sort(
+  // ── Chart data (sorted ascending, P/F excluded) ──
+  const { chartData, pfExcluded } = useMemo(() => {
+    // Exclude P/F records from the numeric trend chart
+    const numericRecords = filteredRecords.filter(r => !r.is_pass_fail);
+    const hasPF = filteredRecords.some(r => r.is_pass_fail);
+    const sorted = [...numericRecords].sort(
       (a, b) =>
         new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
     );
 
     if (selectedSubject !== "全部") {
-      // Single subject: simple array
-      return sorted.map((r) => ({
+      // Single subject: include strike flag + major exam rating for custom dots
+      const data = sorted.map((r) => ({
         date: formatDate(r.event_date),
         score: Math.round((r.score / r.max_score) * 100),
+        _strike: isStrike(r),
+        _mrate: r.event_type === 'major_exam' ? (r.major_exam_rating ?? 'unrated') : 'none',
       }));
+      return { chartData: data, pfExcluded: hasPF };
     }
 
     // All subjects: group by date, one key per subject
-    const byDate = new Map<string, Record<string, number | string>>();
+    const byDate = new Map<string, Record<string, number | string | boolean>>();
     for (const r of sorted) {
       const key = r.event_date;
       if (!byDate.has(key)) {
@@ -234,8 +242,10 @@ export default function RecordsPage() {
       }
       const entry = byDate.get(key)!;
       entry[r.subject] = Math.round((r.score / r.max_score) * 100);
+      entry[`_strike_${r.subject}`] = isStrike(r);
+      entry[`_mrate_${r.subject}`] = r.event_type === 'major_exam' ? (r.major_exam_rating ?? 'unrated') : 'none';
     }
-    return Array.from(byDate.values());
+    return { chartData: Array.from(byDate.values()), pfExcluded: hasPF };
   }, [filteredRecords, selectedSubject]);
 
   // ── Records grouped by month (for collapsible view) ──
@@ -368,10 +378,20 @@ export default function RecordsPage() {
         {chartData.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">成绩趋势</CardTitle>
-              <CardDescription className="text-[10px]">
-                分数百分比 (%)
-              </CardDescription>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <CardTitle className="text-sm">成绩趋势</CardTitle>
+                  <CardDescription className="text-[10px]">
+                    分数百分比 (%)
+                    {pfExcluded && <span className="ml-1 text-muted-foreground/60">· P/F 科目不计入图表</span>}
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2.5 text-[9px] text-muted-foreground shrink-0 pt-0.5">
+                  <span className="flex items-center gap-1"><span className="font-bold text-destructive/80">✕</span> 扣分</span>
+                  <span className="flex items-center gap-1"><span className="text-emerald-500">▲</span> 大考加分</span>
+                  <span className="flex items-center gap-1"><span className="text-destructive/80">▼</span> 大考扣分</span>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={240}>
@@ -406,7 +426,27 @@ export default function RecordsPage() {
                       dataKey="score"
                       stroke="var(--chart-1)"
                       strokeWidth={2}
-                      dot={{ r: 3 }}
+                      dot={(props: { cx?: number; cy?: number; index: number; payload: Record<string, unknown> }) => {
+                        const { cx = 0, cy = 0, index, payload } = props;
+                        const mrate = payload._mrate as string;
+                        if (payload._strike) {
+                          // ✕ X mark for micro test strikes
+                          const s = 4;
+                          return (
+                            <g key={`dot-${index}`}>
+                              <line x1={cx - s} y1={cy - s} x2={cx + s} y2={cy + s} stroke="oklch(0.637 0.237 25.331)" strokeWidth={2.5} strokeLinecap="round" />
+                              <line x1={cx + s} y1={cy - s} x2={cx - s} y2={cy + s} stroke="oklch(0.637 0.237 25.331)" strokeWidth={2.5} strokeLinecap="round" />
+                            </g>
+                          );
+                        } else if (mrate === 'bonus') {
+                          return <polygon key={`dot-${index}`} points={`${cx},${cy - 5} ${cx + 4.5},${cy + 3} ${cx - 4.5},${cy + 3}`} fill="oklch(0.65 0.2 145)" />;
+                        } else if (mrate === 'penalty') {
+                          return <polygon key={`dot-${index}`} points={`${cx},${cy + 5} ${cx + 4.5},${cy - 3} ${cx - 4.5},${cy - 3}`} fill="oklch(0.55 0.22 25)" />;
+                        } else if (mrate === 'unrated') {
+                          return <rect key={`dot-${index}`} x={cx - 3.5} y={cy - 3.5} width={7} height={7} rx={1} fill="oklch(0.6 0.05 280)" />;
+                        }
+                        return <circle key={`dot-${index}`} cx={cx} cy={cy} r={3} fill="var(--chart-1)" />;
+                      }}
                       activeDot={{ r: 5 }}
                       name={selectedSubject}
                     />
@@ -419,7 +459,28 @@ export default function RecordsPage() {
                           dataKey={subject}
                           stroke={CHART_COLORS[subject] || `var(--chart-${i + 1})`}
                           strokeWidth={2}
-                          dot={{ r: 3 }}
+                          dot={(props: { cx?: number; cy?: number; index: number; payload: Record<string, unknown> }) => {
+                            const { cx = 0, cy = 0, index, payload } = props;
+                            const color = CHART_COLORS[subject] || `var(--chart-${i + 1})`;
+                            if (payload[subject] === undefined) return <g key={`dot-${index}`} />;
+                            const mrate = payload[`_mrate_${subject}`] as string;
+                            if (payload[`_strike_${subject}`]) {
+                              const s = 4;
+                              return (
+                                <g key={`dot-${index}`}>
+                                  <line x1={cx - s} y1={cy - s} x2={cx + s} y2={cy + s} stroke="oklch(0.637 0.237 25.331)" strokeWidth={2.5} strokeLinecap="round" />
+                                  <line x1={cx + s} y1={cy - s} x2={cx - s} y2={cy + s} stroke="oklch(0.637 0.237 25.331)" strokeWidth={2.5} strokeLinecap="round" />
+                                </g>
+                              );
+                            } else if (mrate === 'bonus') {
+                              return <polygon key={`dot-${index}`} points={`${cx},${cy - 5} ${cx + 4.5},${cy + 3} ${cx - 4.5},${cy + 3}`} fill="oklch(0.65 0.2 145)" />;
+                            } else if (mrate === 'penalty') {
+                              return <polygon key={`dot-${index}`} points={`${cx},${cy + 5} ${cx + 4.5},${cy - 3} ${cx - 4.5},${cy - 3}`} fill="oklch(0.55 0.22 25)" />;
+                            } else if (mrate === 'unrated') {
+                              return <rect key={`dot-${index}`} x={cx - 3.5} y={cy - 3.5} width={7} height={7} rx={1} fill="oklch(0.6 0.05 280)" />;
+                            }
+                            return <circle key={`dot-${index}`} cx={cx} cy={cy} r={3} fill={color} />;
+                          }}
                           activeDot={{ r: 5 }}
                           connectNulls
                           name={subject}
@@ -450,9 +511,11 @@ export default function RecordsPage() {
               <div className="divide-y divide-border">
                 {recordsByMonth.map(({ month, records: monthRecords }) => {
                   const isExpanded = resolvedExpanded.has(month);
-                  const avgScore = Math.round(
-                    monthRecords.reduce((s, r) => s + (r.score / r.max_score) * 100, 0) / monthRecords.length,
-                  );
+                  const numericRecords = monthRecords.filter(r => !r.is_pass_fail);
+                  const avgScore = numericRecords.length > 0
+                    ? Math.round(numericRecords.reduce((s, r) => s + (r.score / r.max_score) * 100, 0) / numericRecords.length)
+                    : null;
+                  const pfCount = monthRecords.filter(r => r.is_pass_fail).length;
                   const strikes = monthRecords.filter(isStrike).length;
 
                   return (
@@ -464,7 +527,12 @@ export default function RecordsPage() {
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-semibold font-mono">{month}</span>
                           <span className="text-[10px] text-muted-foreground">{monthRecords.length} 条</span>
-                          <span className="text-[10px] text-muted-foreground">均分 {avgScore}%</span>
+                          {avgScore !== null && (
+                            <span className="text-[10px] text-muted-foreground">均分 {avgScore}%</span>
+                          )}
+                          {pfCount > 0 && (
+                            <span className="text-[10px] text-muted-foreground/60">{pfCount} 条 P/F</span>
+                          )}
                           {strikes > 0 && (
                             <span className="text-[10px] text-destructive">{strikes} 次扣分</span>
                           )}
@@ -490,16 +558,37 @@ export default function RecordsPage() {
                                   {(r.event_type === "major_exam" || r.event_type === "unit_exam") && (
                                     <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">大考</Badge>
                                   )}
+                                  {r.event_type === 'major_exam' && r.major_exam_rating === 'bonus' && (
+                                    <Badge className="text-[9px] px-1 py-0 h-4 bg-emerald-500/15 text-emerald-600 border border-emerald-500/30">▲ +¥25</Badge>
+                                  )}
+                                  {r.event_type === 'major_exam' && r.major_exam_rating === 'penalty' && (
+                                    <Badge className="text-[9px] px-1 py-0 h-4 bg-destructive/15 text-destructive border border-destructive/30">▼ −25</Badge>
+                                  )}
+                                  {r.event_type === 'major_exam' && r.major_exam_rating == null && (
+                                    <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-orange-400/50 text-orange-500">待评</Badge>
+                                  )}
                                   {isStrike(r) && (
                                     <Badge variant="destructive" className="text-[9px] px-1 py-0 h-4">扣分</Badge>
                                   )}
                                   <span className="text-[10px] text-muted-foreground/60">{r.event_date.slice(5)}</span>
                                 </div>
                                 <div className="shrink-0 flex items-baseline gap-0.5">
-                                  <span className={`font-mono text-sm font-semibold ${isStrike(r) ? "text-destructive" : "text-foreground"}`}>
-                                    {r.score}
-                                  </span>
-                                  <span className="text-muted-foreground text-[10px]">/{r.max_score}</span>
+                                  {r.is_pass_fail ? (
+                                    <span className={`font-mono text-sm font-bold px-1.5 py-0.5 rounded ${
+                                      Number(r.score) === 0
+                                        ? 'text-destructive bg-destructive/10'
+                                        : 'text-emerald-500 bg-emerald-500/10'
+                                    }`}>
+                                      {Number(r.score) === 0 ? 'F' : 'P'}
+                                    </span>
+                                  ) : (
+                                    <>
+                                      <span className={`font-mono text-sm font-semibold ${isStrike(r) ? "text-destructive" : "text-foreground"}`}>
+                                        {r.score}
+                                      </span>
+                                      <span className="text-muted-foreground text-[10px]">/{r.max_score}</span>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             );

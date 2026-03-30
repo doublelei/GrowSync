@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
-import { SUBJECTS, HABIT_TYPES, todayBeijing, currentMonthBeijing, RATING_REASON_PRESETS } from "@/lib/constants";
+import { SUBJECTS, HABIT_TYPES, todayBeijing, currentMonthBeijing, RATING_REASON_PRESETS, PASS_FAIL_SUBJECTS } from "@/lib/constants";
 import {
   useInsertMicroTest,
   useInsertMajorExam,
@@ -67,6 +67,9 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
   const [ratingRecordId, setRatingRecordId] = useState<number | null>(null);
+  // P/F mode state for micro test form
+  const [isPassFail, setIsPassFail] = useState(false);
+  const [pfResult, setPfResult] = useState<'pass' | 'fail' | null>(null);
 
   const toggleSection = useCallback((id: string) => {
     setActiveSection(prev => prev === id ? null : id);
@@ -87,27 +90,45 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
     const fd = new FormData(e.currentTarget);
     const date = fd.get('date') as string;
     const subject = fd.get('subject') as string;
-    const score = fd.get('score') as string;
-    const max_score = fd.get('max_score') as string;
     const is_retest = fd.get('is_retest') === 'on';
 
-    if (!date || !subject || !score || !max_score) { toast.error("必填项为空"); return; }
-
-    const isDuplicate = await checkDuplicateAcademic({ date, subject, score: Number(score) });
-    if (isDuplicate) {
-      if (!window.confirm(`已存在 ${date} ${subject} ${score} 分的记录，确认重复录入？`)) return;
-    }
-
-    insertMicroTest.mutate(
-      { date, subject, score: Number(score), max_score: Number(max_score), is_retest },
-      {
-        onSuccess: () => {
-          microTestForm.current?.reset();
-          toast.success(`${subject} ${score} 分已录入`);
+    if (isPassFail) {
+      // P/F mode
+      if (!date || !subject || pfResult === null) { toast.error('请选择 Pass 或 Fail'); return; }
+      const score = pfResult === 'pass' ? 1 : 0;
+      insertMicroTest.mutate(
+        { date, subject, score, max_score: 1, is_retest, is_pass_fail: true },
+        {
+          onSuccess: () => {
+            microTestForm.current?.reset();
+            setPfResult(null);
+            toast.success(`${subject} ${pfResult === 'pass' ? 'Pass ✓' : 'Fail ✗'} 已录入`);
+          },
+          onError: (err) => toast.error('录入失败: ' + err.message),
         },
-        onError: (err) => toast.error("录入失败: " + err.message),
-      },
-    );
+      );
+    } else {
+      // Numeric mode
+      const score = fd.get('score') as string;
+      const max_score = fd.get('max_score') as string;
+      if (!date || !subject || !score || !max_score) { toast.error('必填项为空'); return; }
+
+      const isDuplicate = await checkDuplicateAcademic({ date, subject, score: Number(score) });
+      if (isDuplicate) {
+        if (!window.confirm(`已存在 ${date} ${subject} ${score} 分的记录，确认重复录入？`)) return;
+      }
+
+      insertMicroTest.mutate(
+        { date, subject, score: Number(score), max_score: Number(max_score), is_retest, is_pass_fail: false },
+        {
+          onSuccess: () => {
+            microTestForm.current?.reset();
+            toast.success(`${subject} ${score} 分已录入`);
+          },
+          onError: (err) => toast.error('录入失败: ' + err.message),
+        },
+      );
+    }
   };
 
   const handleMajorExamSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -231,15 +252,70 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
           <form ref={microTestForm} onSubmit={handleMicroTestSubmit} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <input name="date" type="date" className={inputClass} required defaultValue={todayBeijing()} />
-              <select name="subject" className={selectClass}>
-                {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
+              <select
+                name="subject"
+                className={selectClass}
+                onChange={e => {
+                  const s = e.target.value;
+                  const pf = PASS_FAIL_SUBJECTS.has(s);
+                  setIsPassFail(pf);
+                  setPfResult(null);
+                }}
+              >
+                {SUBJECTS.map(s => <option key={s} value={s}>{s}{PASS_FAIL_SUBJECTS.has(s) ? ' (P/F)' : ''}</option>)}
               </select>
             </div>
+
+            {/* P/F toggle (manual override) */}
             <div className="flex items-center gap-2">
-              <input name="score" type="number" step="0.5" placeholder="得分" className={`flex-1 ${inputClass}`} required />
-              <span className="text-muted-foreground text-xs">/</span>
-              <input name="max_score" type="number" defaultValue={100} className={`flex-1 ${inputClass}`} required />
+              <button
+                type="button"
+                onClick={() => { setIsPassFail(v => !v); setPfResult(null); }}
+                className={`text-[10px] px-2 py-1 rounded border transition-colors ${
+                  isPassFail
+                    ? 'bg-primary/10 text-primary border-primary/30'
+                    : 'bg-muted/20 text-muted-foreground border-border/40 hover:border-border'
+                }`}
+              >
+                {isPassFail ? '⇄ 切换为分数' : '⇄ 切换为 P/F'}
+              </button>
             </div>
+
+            {isPassFail ? (
+              /* P/F selector */
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPfResult('pass')}
+                  className={`flex-1 py-2 rounded border text-xs font-semibold transition-all ${
+                    pfResult === 'pass'
+                      ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/40 ring-1 ring-emerald-500/30'
+                      : 'bg-muted/10 text-muted-foreground border-border/40 hover:border-border'
+                  }`}
+                >
+                  ✓ Pass
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPfResult('fail')}
+                  className={`flex-1 py-2 rounded border text-xs font-semibold transition-all ${
+                    pfResult === 'fail'
+                      ? 'bg-destructive/15 text-destructive border-destructive/40 ring-1 ring-destructive/30'
+                      : 'bg-muted/10 text-muted-foreground border-border/40 hover:border-border'
+                  }`}
+                >
+                  ✗ Fail
+                </button>
+              </div>
+            ) : (
+              /* Numeric score inputs */
+              <div className="flex items-center gap-2">
+                <input name="score" type="number" step="0.5" placeholder="得分" className={`flex-1 ${inputClass}`} required />
+                <span className="text-muted-foreground text-xs">/</span>
+                <input name="max_score" type="number" defaultValue={100} className={`flex-1 ${inputClass}`} required />
+              </div>
+            )}
+
             <div className="flex items-center gap-1.5">
               <input type="checkbox" name="is_retest" id="is_retest" className="w-3.5 h-3.5 accent-primary" />
               <label htmlFor="is_retest" className="text-xs text-muted-foreground cursor-pointer">重考成绩</label>

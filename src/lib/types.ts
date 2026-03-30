@@ -35,6 +35,7 @@ export interface AcademicRecord {
   highest_score?: number;
   class_rank?: number;
   is_retest?: boolean;
+  is_pass_fail?: boolean;
   major_exam_rating?: 'bonus' | 'neutral' | 'penalty' | null;
   rating_reason?: string | null;
   created_at: string;

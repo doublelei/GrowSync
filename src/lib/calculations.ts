@@ -92,11 +92,19 @@ export function calculateWeeklyQuests(
     const deductions: { reason: string; amount: number }[] = [];
 
     academicsThisWeek.forEach(a => {
-      const score = Number(a.score);
-      const threshold = a.subject === '英语' ? STRIKE_THRESHOLD_ENGLISH : STRIKE_THRESHOLD_DEFAULT;
-      if (score < threshold) {
-        strikes++;
-        deductions.push({ reason: `${a.subject}: 未达标`, amount: STRIKE_PENALTY });
+      if (a.is_pass_fail) {
+        // Pass/Fail subject: score=0 means Fail → strike
+        if (Number(a.score) === 0) {
+          strikes++;
+          deductions.push({ reason: `${a.subject}: 未通过(F)`, amount: STRIKE_PENALTY });
+        }
+      } else {
+        const score = Number(a.score);
+        const threshold = a.subject === '英语' ? STRIKE_THRESHOLD_ENGLISH : STRIKE_THRESHOLD_DEFAULT;
+        if (score < threshold) {
+          strikes++;
+          deductions.push({ reason: `${a.subject}: 未达标`, amount: STRIKE_PENALTY });
+        }
       }
     });
 
