@@ -29,7 +29,7 @@ export function AdminMilestoneSection({ tasks, monthId }: AdminMilestoneSectionP
 
   // 分类任务
   const draftTasks = tasks.filter((t) => t.status === "draft");
-  const pendingTasks = tasks.filter((t) => t.status === "under_review" || t.status === "submitted");
+  const pendingTasks = tasks.filter((t) => t.status === "under_review");
   const completedTasks = tasks.filter((t) => t.status === "approved");
 
   return (
@@ -204,7 +204,7 @@ function CreateTaskForm({ monthId }: { monthId: string }) {
     e.preventDefault();
 
     const reward = parseInt(rewardAmount, 10);
-    if (!itemName || !reward || reward <= 0) {
+    if (!itemName || !Number.isFinite(reward) || reward <= 0) {
       toast.error("请填写完整信息");
       return;
     }

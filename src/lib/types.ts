@@ -25,7 +25,7 @@ export interface AcademicRecord {
   id: number;
   player_id: string;
   event_date: string;
-  event_type: 'micro_test' | 'unit_exam' | 'major_exam' | string;
+  event_type: 'micro_test' | 'unit_exam' | 'major_exam';
   subject: string;
   score: number;
   max_score: number;
@@ -164,7 +164,7 @@ export interface GrowSyncData {
 // ── Milestone Task Types ──
 
 export type MilestoneTaskType = 'book' | 'movie';
-export type MilestoneTaskStatus = 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected';
+export type MilestoneTaskStatus = 'draft' | 'under_review' | 'approved' | 'rejected';
 
 export interface MilestoneTask {
   id: number;

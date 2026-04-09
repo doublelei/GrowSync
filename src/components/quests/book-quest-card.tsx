@@ -64,7 +64,7 @@ export function BookQuestCard({ task, monthId }: BookQuestCardProps) {
 
   const isDraft = task.status === "draft";
   const isRejected = task.status === "rejected";
-  const isUnderReview = task.status === "under_review" || task.status === "submitted";
+  const isUnderReview = task.status === "under_review";
   const canEdit = isDraft || isRejected;
   const canSubmit =
     canEdit &&

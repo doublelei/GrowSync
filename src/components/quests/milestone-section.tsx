@@ -19,7 +19,7 @@ export function MilestoneSection({ tasks, monthId }: MilestoneSectionProps) {
 
   // 过滤出需要显示的任务（未完成的和进行中的）
   const activeTasks = tasks.filter(
-    (t) => t.status === "draft" || t.status === "submitted" || t.status === "under_review" || t.status === "rejected"
+    (t) => t.status === "draft" || t.status === "under_review" || t.status === "rejected"
   );
 
   // 已完成的任务（用于成就墙计数）
@@ -83,7 +83,6 @@ function MilestoneTaskItem({ task, monthId, isExpanded, onToggle }: MilestoneTas
     switch (task.status) {
       case "draft":
         return <Badge variant="outline" className="text-[10px] px-2 py-0.5 text-muted-foreground/50 border-border/30">草稿</Badge>;
-      case "submitted":
       case "under_review":
         return <Badge variant="outline" className="text-[10px] px-2 py-0.5 text-yellow-400 border-yellow-400/30 bg-yellow-400/5">审核中</Badge>;
       case "rejected":
