@@ -41,20 +41,20 @@ export type HabitType = (typeof HABIT_TYPES)[number];
 // ── Timezone ──
 export const TIMEZONE = 'Asia/Shanghai';
 
+const beijingDateFmt = new Intl.DateTimeFormat('en-CA', { timeZone: TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit' });
+const beijingTimeFmt = new Intl.DateTimeFormat('en-CA', { timeZone: TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+
 /** Current moment as a Date whose local methods reflect Beijing time. */
 export function nowBeijing(): Date {
-  const utc = new Date();
-  const beijing = new Date(utc.toLocaleString('en-US', { timeZone: TIMEZONE }));
-  return beijing;
+  // Use Intl to reliably extract Beijing time components
+  const parts = beijingTimeFmt.formatToParts(new Date());
+  const get = (type: string) => Number(parts.find(p => p.type === type)?.value ?? 0);
+  return new Date(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second'));
 }
 
 /** Today's date string in Beijing time: "YYYY-MM-DD" */
 export function todayBeijing(): string {
-  const d = nowBeijing();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+  return beijingDateFmt.format(new Date());
 }
 
 /** Current month string in Beijing time: "YYYY-MM" */

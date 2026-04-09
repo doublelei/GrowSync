@@ -9,6 +9,7 @@ const tableToKeys: Record<string, (monthId: string) => readonly unknown[]> = {
   habit_logs: queryKeys.habits,
   habit_proofs: queryKeys.habitProofs,
   monthly_school_points: queryKeys.monthlyPoints,
+  milestone_tasks: queryKeys.milestoneTasks,
   transactions: () => queryKeys.transactions(),
   quest_proofs: () => queryKeys.questProofs(),
 };
