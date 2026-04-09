@@ -5,8 +5,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import type { MilestoneTask } from "@/lib/types";
 import { MILESTONE_TASK_LABELS } from "@/lib/constants";
-import { BookQuestCard } from "./book-quest-card";
-import { MovieQuestCard } from "./movie-quest-card";
+import { QuestCard } from "./quest-card";
 import { Trophy } from "lucide-react";
 
 interface MilestoneSectionProps {
@@ -131,11 +130,7 @@ function MilestoneTaskItem({ task, monthId, isExpanded, onToggle }: MilestoneTas
       {/* 展开内容 */}
       {isExpanded && (
         <div className="px-4 pb-4 border-t border-border/20 pt-4">
-          {task.task_type === "book" ? (
-            <BookQuestCard task={task} monthId={monthId} />
-          ) : (
-            <MovieQuestCard task={task} monthId={monthId} />
-          )}
+          <QuestCard task={task} monthId={monthId} />
         </div>
       )}
     </div>
