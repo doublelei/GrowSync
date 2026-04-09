@@ -138,9 +138,28 @@ CREATE TABLE IF NOT EXISTS milestone_tasks (
   updated_at timestamptz default now() not null
 );
 
--- 索引
+-- Check constraints for milestone_tasks
+ALTER TABLE milestone_tasks DROP CONSTRAINT IF EXISTS chk_milestone_status;
+ALTER TABLE milestone_tasks ADD CONSTRAINT chk_milestone_status
+  CHECK (status IN ('draft', 'under_review', 'approved', 'rejected'));
+
+ALTER TABLE milestone_tasks DROP CONSTRAINT IF EXISTS chk_milestone_reward_positive;
+ALTER TABLE milestone_tasks ADD CONSTRAINT chk_milestone_reward_positive
+  CHECK (reward_amount > 0);
+
+ALTER TABLE milestone_tasks DROP CONSTRAINT IF EXISTS chk_milestone_task_type;
+ALTER TABLE milestone_tasks ADD CONSTRAINT chk_milestone_task_type
+  CHECK (task_type IN ('book', 'movie'));
+
+-- Indexes for milestone_tasks
 CREATE INDEX IF NOT EXISTS idx_milestone_player_status ON milestone_tasks(player_id, status);
 CREATE INDEX IF NOT EXISTS idx_milestone_type ON milestone_tasks(task_type);
+
+-- Indexes for frequently queried columns
+CREATE INDEX IF NOT EXISTS idx_academic_player_date ON academic_records(player_id, event_date);
+CREATE INDEX IF NOT EXISTS idx_habit_player_date ON habit_logs(player_id, log_date);
+CREATE INDEX IF NOT EXISTS idx_transaction_player ON transactions(player_id);
+CREATE INDEX IF NOT EXISTS idx_habit_proofs_player_date ON habit_proofs(player_id, log_date);
 
 -- 5. Row Level Security (public access for private project)
 -- ------------------------------------------------------------
