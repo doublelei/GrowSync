@@ -52,7 +52,7 @@ export function HomeClient({ isParent }: { isParent: boolean }) {
     );
   }
 
-  const { playerData, pendingProofs, academicRecords, habitLogs, habitProofs, monthlyPoints } = data;
+  const { playerData, pendingProofs, academicRecords, habitLogs, habitProofs, monthlyPoints, milestoneTasks } = data;
 
   const cw = weeks[currentWeekIndex];
   const currentWeekInfo = cw
@@ -129,12 +129,12 @@ export function HomeClient({ isParent }: { isParent: boolean }) {
           </TabsContent>
 
           <TabsContent value="quests">
-            <QuestsTab weeklyQuests={playerData.weeklyQuests} currentWeekIndex={currentWeekIndex} monthId={monthId} habitProofs={habitProofs} />
+            <QuestsTab weeklyQuests={playerData.weeklyQuests} currentWeekIndex={currentWeekIndex} monthId={monthId} habitProofs={habitProofs} milestoneTasks={milestoneTasks} />
           </TabsContent>
 
           {isParent && (
             <TabsContent value="admin">
-              <AdminTab pendingProofs={pendingProofs} playerData={playerData} currentWeekNum={currentWeekInfo.week} academicRecords={academicRecords} habitLogs={habitLogs} habitProofs={habitProofs} monthId={monthId} />
+              <AdminTab pendingProofs={pendingProofs} playerData={playerData} currentWeekNum={currentWeekInfo.week} academicRecords={academicRecords} habitLogs={habitLogs} habitProofs={habitProofs} milestoneTasks={milestoneTasks} monthId={monthId} />
             </TabsContent>
           )}
         </Tabs>

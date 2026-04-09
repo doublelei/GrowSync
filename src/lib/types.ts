@@ -158,4 +158,57 @@ export interface GrowSyncData {
   monthlyPoints: MonthlySchoolPoint[];
   quests: QuestDisplay[];
   pendingProofs: PendingProofDisplay[];
+  milestoneTasks: MilestoneTask[];
+}
+
+// ── Milestone Task Types ──
+
+export type MilestoneTaskType = 'book' | 'movie';
+export type MilestoneTaskStatus = 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected';
+
+export interface MilestoneTask {
+  id: number;
+  player_id: string;
+  task_type: MilestoneTaskType;
+  item_name: string;
+  item_difficulty?: string;
+  reward_amount: number;
+  deep_questions?: string[];
+  content_draft?: string;
+  content_submitted?: string;
+  word_count?: number;
+  status: MilestoneTaskStatus;
+  reviewer_notes?: string;
+  reviewed_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// 用于创建任务的输入（家长端）
+export interface MilestoneTaskConfig {
+  task_type: MilestoneTaskType;
+  item_name: string;
+  item_difficulty?: string;
+  reward_amount: number;
+  deep_questions: string[];
+}
+
+// 用于显示的任务卡片
+export interface MilestoneTaskDisplay {
+  id: number;
+  task_type: MilestoneTaskType;
+  item_name: string;
+  reward_amount: number;
+  deep_questions: string[];
+  status: MilestoneTaskStatus;
+  word_count?: number;
+  can_submit: boolean;
+  can_edit: boolean;
+  reviewer_notes?: string;
+}
+
+// 学生提交的内容结构（JSON 格式存储在 content_submitted 中）
+export interface MilestoneSubmission {
+  answers: string[];  // 每个思考题的答案，索引与 deep_questions 对应
+  totalWords: number;
 }

@@ -17,6 +17,7 @@ export const queryKeys = {
   habitProofs: (monthId: string) => ['season', monthId, 'habitProofs'] as const,
   transactions: () => ['transactions'] as const,
   questProofs: () => ['questProofs'] as const,
+  milestoneTasks: (monthId: string) => ['season', monthId, 'milestoneTasks'] as const,
 
   // Full-history keys for /records page
   allAcademics: () => ['records', 'academics'] as const,

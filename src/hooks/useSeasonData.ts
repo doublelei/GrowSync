@@ -8,6 +8,7 @@ import {
   fetchMonthlyPoints,
   fetchTransactions,
   fetchQuestProofs,
+  fetchMilestoneTasks,
 } from '@/lib/queries';
 import { PLAYER_ID } from '@/lib/constants';
 import {
@@ -96,6 +97,16 @@ function useQuestProofs() {
   });
 }
 
+function useMilestoneTasksQuery({ monthId }: SeasonParams) {
+  return useQuery({
+    queryKey: queryKeys.milestoneTasks(monthId),
+    queryFn: async () => {
+      const data = await fetchMilestoneTasks(PLAYER_ID);
+      return data;
+    },
+  });
+}
+
 export function useSeasonData(params: SeasonParams) {
   const academics = useAcademics(params);
   const habits = useHabits(params);
@@ -103,10 +114,11 @@ export function useSeasonData(params: SeasonParams) {
   const monthly = useMonthlyPoints(params);
   const transactions = useTransactions();
   const proofs = useQuestProofs();
+  const milestoneTasksQuery = useMilestoneTasksQuery(params);
 
   const isLoading = academics.isLoading || habits.isLoading ||
     habitProofsQuery.isLoading || monthly.isLoading ||
-    transactions.isLoading || proofs.isLoading;
+    transactions.isLoading || proofs.isLoading || milestoneTasksQuery.isLoading;
 
   const academicRecords = academics.data ?? [];
   const habitLogs = habits.data ?? [];
@@ -114,6 +126,7 @@ export function useSeasonData(params: SeasonParams) {
   const monthlyPoints = monthly.data ?? [];
   const transactionList = transactions.data ?? [];
   const proofList = proofs.data ?? [];
+  const milestoneTasks = milestoneTasksQuery.data ?? [];
 
   const weeklyQuests = calculateWeeklyQuests(params.weeks, habitLogs, academicRecords);
   const monthlyPoolEarned = calculateMonthlyPool(monthlyPoints, params.monthId);
@@ -131,6 +144,7 @@ export function useSeasonData(params: SeasonParams) {
     monthlyPoints,
     quests: formatQuestDisplay(proofList),
     pendingProofs: formatPendingProofs(proofList),
+    milestoneTasks,
   };
 
   return { data, isLoading };

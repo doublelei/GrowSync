@@ -18,7 +18,8 @@ import {
   checkDuplicateAcademic,
 } from "@/hooks/useMutations";
 import { suggestRating } from "@/lib/calculations";
-import type { PlayerData, PendingProofDisplay, AcademicRecord, HabitLog, HabitProof, MajorExamRating } from "@/lib/types";
+import type { PlayerData, PendingProofDisplay, AcademicRecord, HabitLog, HabitProof, MajorExamRating, MilestoneTask } from "@/lib/types";
+import { AdminMilestoneSection } from "./admin-milestone-section";
 
 const inputClass = "w-full bg-background/50 border border-border/30 rounded-lg px-2.5 py-2 text-xs text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/30 transition-all";
 const selectClass = "w-full bg-background/50 border border-border/30 rounded-lg px-2 py-2 text-xs text-foreground focus:outline-none focus:border-primary/30 transition-all";
@@ -49,13 +50,14 @@ function Section({ id, title, description, activeSection, onToggle, children }: 
   );
 }
 
-export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRecords = [], habitLogs = [], habitProofs = [], monthId }: {
+export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRecords = [], habitLogs = [], habitProofs = [], milestoneTasks = [], monthId }: {
   pendingProofs: PendingProofDisplay[];
   playerData: PlayerData;
   currentWeekNum: number;
   academicRecords?: AcademicRecord[];
   habitLogs?: HabitLog[];
   habitProofs?: HabitProof[];
+  milestoneTasks?: MilestoneTask[];
   monthId: string;
 }) {
   const microTestForm = useRef<HTMLFormElement>(null);
@@ -515,6 +517,11 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
             <div className="p-6 text-center text-xs text-muted-foreground">暂无待审内容</div>
           )}
         </div>
+      </Section>
+
+      {/* 6. Milestone Tasks — collapsible */}
+      <Section id="milestones" title="阶段性任务管理" description="完本大赏与光影计划" activeSection={activeSection} onToggle={toggleSection}>
+        <AdminMilestoneSection tasks={milestoneTasks} monthId={monthId} />
       </Section>
     </div>
   );

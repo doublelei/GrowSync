@@ -61,3 +61,21 @@ export function todayBeijing(): string {
 export function currentMonthBeijing(): string {
   return todayBeijing().slice(0, 7);
 }
+
+// ── Milestone Task Constants ──
+
+// 字数要求
+export const BOOK_REVIEW_MIN_WORDS = 300;
+export const BOOK_REVIEW_MAX_WORDS = 500;
+export const MOVIE_REVIEW_MIN_WORDS = 150;
+export const MOVIE_REVIEW_MAX_WORDS = 200;
+
+// 默认奖励金额（仅供参考，可覆盖）
+export const DEFAULT_BOOK_REWARD = { high: 150, medium: 80, low: 50 } as const;
+export const DEFAULT_MOVIE_REWARD = 40;
+
+// 任务类型标签
+export const MILESTONE_TASK_LABELS = {
+  book: { name: '完本大赏', subtitle: 'The Finisher', icon: '📚' },
+  movie: { name: '光影计划', subtitle: 'Cinema Master', icon: '🎬' },
+} as const;

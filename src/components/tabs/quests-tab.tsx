@@ -4,7 +4,8 @@ import { useState, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { HABIT_REWARD_PER_TYPE, nowBeijing } from "@/lib/constants";
 import { useSubmitExerciseProof, useSubmitReadingProof } from "@/hooks/useMutations";
-import type { WeeklyQuestState, HabitProof } from "@/lib/types";
+import type { WeeklyQuestState, HabitProof, MilestoneTask } from "@/lib/types";
+import { MilestoneSection } from "@/components/quests/milestone-section";
 
 type ProofStatus = 'none' | 'pending' | 'rejected' | 'approved';
 
@@ -30,11 +31,12 @@ function getProofStatus(
   return { status: latest.status as ProofStatus, proof: latest };
 }
 
-export function QuestsTab({ weeklyQuests, currentWeekIndex, monthId, habitProofs }: {
+export function QuestsTab({ weeklyQuests, currentWeekIndex, monthId, habitProofs, milestoneTasks }: {
   weeklyQuests: WeeklyQuestState[];
   currentWeekIndex: number;
   monthId: string;
   habitProofs: HabitProof[];
+  milestoneTasks: MilestoneTask[];
 }) {
   const submitExercise = useSubmitExerciseProof(monthId);
   const submitReading = useSubmitReadingProof(monthId);
@@ -224,6 +226,9 @@ export function QuestsTab({ weeklyQuests, currentWeekIndex, monthId, habitProofs
           />
         </div>
       </div>
+
+      {/* Milestone Tasks Section */}
+      <MilestoneSection tasks={milestoneTasks} monthId={monthId} />
     </div>
   );
 }

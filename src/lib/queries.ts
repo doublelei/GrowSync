@@ -56,6 +56,16 @@ export async function fetchQuestProofs() {
     .order('created_at', { ascending: false });
 }
 
+export async function fetchMilestoneTasks(playerId: string) {
+  const { data, error } = await supabase
+    .from('milestone_tasks')
+    .select('*')
+    .eq('player_id', playerId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
 // ── Full-history queries (for /records page) ──
 
 export async function fetchAllAcademicRecords() {
