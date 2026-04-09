@@ -223,7 +223,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
     r => r.event_type === 'major_exam' && r.major_exam_rating == null,
   );
 
-  const handleDeleteRecord = (table: string, id: number) => {
+  const handleDeleteRecord = (table: 'academic_records' | 'habit_logs' | 'monthly_school_points', id: number) => {
     const key = `${table}-${id}`;
     if (confirmingDelete !== key) {
       setConfirmingDelete(key);

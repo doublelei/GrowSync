@@ -257,7 +257,7 @@ export async function fetchPendingMilestoneTasks(): Promise<MilestoneTask[]> {
     .from('milestone_tasks')
     .select('*')
     .eq('status', 'under_review')
-    .order('submitted_at', { ascending: true });
+    .order('updated_at', { ascending: true });
   if (error) throw error;
   return data || [];
 }

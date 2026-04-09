@@ -241,7 +241,7 @@ export function useUpsertHabit(monthId: string) {
 export function useDeleteRecord(monthId: string) {
   const inv = useInvalidate(monthId);
   return useMutation({
-    mutationFn: async ({ table, id }: { table: string; id: number }) => {
+    mutationFn: async ({ table, id }: { table: 'academic_records' | 'habit_logs' | 'monthly_school_points'; id: number }) => {
       const { error } = await supabase.from(table).delete().eq('id', id);
       if (error) throw error;
     },
