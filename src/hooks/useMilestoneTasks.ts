@@ -47,7 +47,41 @@ interface ResubmitInput {
   totalWords: number;
 }
 
+interface EditTaskInput {
+  taskId: number;
+  task_type: MilestoneTaskType;
+  item_name: string;
+  item_difficulty?: string;
+  reward_amount: number;
+  deep_questions: string[];
+}
+
 // ── Mutations ──
+
+/**
+ * 家长：编辑草稿任务
+ */
+export function useEditMilestoneTask(monthId: string) {
+  const inv = useInvalidate(monthId);
+  return useMutation({
+    mutationFn: async (input: EditTaskInput) => {
+      const { error } = await supabase
+        .from('milestone_tasks')
+        .update({
+          task_type: input.task_type,
+          item_name: input.item_name,
+          item_difficulty: input.item_difficulty || null,
+          reward_amount: input.reward_amount,
+          deep_questions: input.deep_questions,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', input.taskId)
+        .eq('status', 'draft');
+      if (error) throw error;
+    },
+    onSuccess: () => inv.milestoneTasks(),
+  });
+}
 
 /**
  * 家长：创建新任务

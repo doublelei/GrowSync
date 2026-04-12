@@ -5,9 +5,10 @@ import { useState, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ChevronDown, Plus, Trash2, Check, X, Trophy, BookOpen, Film } from "lucide-react";
+import { ChevronDown, Plus, Trash2, Check, X, Trophy, BookOpen, Film, Pencil } from "lucide-react";
 import {
   useCreateMilestoneTask,
+  useEditMilestoneTask,
   useApproveMilestoneTask,
   useRejectMilestoneTask,
   useDeleteMilestoneTask,
@@ -536,11 +537,24 @@ function PendingTaskCard({ task, monthId }: { task: MilestoneTask; monthId: stri
 
 function DraftTasksList({ tasks, monthId }: { tasks: MilestoneTask[]; monthId: string }) {
   const deleteTask = useDeleteMilestoneTask(monthId);
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
 
   return (
     <div className="space-y-2 pt-3">
       {tasks.map((task) => {
         const label = MILESTONE_TASK_LABELS[task.task_type];
+
+        if (editingTaskId === task.id) {
+          return (
+            <EditTaskForm
+              key={task.id}
+              task={task}
+              monthId={monthId}
+              onClose={() => setEditingTaskId(null)}
+            />
+          );
+        }
+
         return (
           <div key={task.id} className="flex items-center justify-between p-2.5 bg-muted/10 rounded-lg border border-border/30">
             <div className="flex items-center gap-2">
@@ -548,21 +562,184 @@ function DraftTasksList({ tasks, monthId }: { tasks: MilestoneTask[]; monthId: s
               <span className="text-xs font-medium">{task.item_name}</span>
               <span className="text-[10px] text-muted-foreground/50">¥{task.reward_amount}</span>
             </div>
-            <button
-              onClick={() => {
-                if (confirm(`确定删除「${task.item_name}」吗？`)) {
-                  deleteTask.mutate(task.id);
-                }
-              }}
-              disabled={deleteTask.isPending}
-              className="text-muted-foreground/50 hover:text-destructive transition-colors"
-            >
-              <Trash2 className="size-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setEditingTaskId(task.id)}
+                className="text-muted-foreground/50 hover:text-primary transition-colors"
+              >
+                <Pencil className="size-4" />
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm(`确定删除「${task.item_name}」吗？`)) {
+                    deleteTask.mutate(task.id);
+                  }
+                }}
+                disabled={deleteTask.isPending}
+                className="text-muted-foreground/50 hover:text-destructive transition-colors"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            </div>
           </div>
         );
       })}
     </div>
+  );
+}
+
+// ── 编辑任务表单 ──
+
+function EditTaskForm({ task, monthId, onClose }: { task: MilestoneTask; monthId: string; onClose: () => void }) {
+  const [taskType, setTaskType] = useState<MilestoneTaskType>(task.task_type);
+  const [itemName, setItemName] = useState(task.item_name);
+  const [rewardAmount, setRewardAmount] = useState(String(task.reward_amount));
+  const [questions, setQuestions] = useState<string[]>(task.deep_questions?.length ? task.deep_questions : [""]);
+
+  const editTask = useEditMilestoneTask(monthId);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const reward = parseInt(rewardAmount, 10);
+    if (!itemName || !Number.isFinite(reward) || reward <= 0) {
+      toast.error("请填写完整信息");
+      return;
+    }
+    const validQuestions = questions.filter((q) => q.trim() !== "");
+    if (validQuestions.length === 0) {
+      toast.error("至少添加一个深度思考题");
+      return;
+    }
+    editTask.mutate(
+      {
+        taskId: task.id,
+        task_type: taskType,
+        item_name: itemName.trim(),
+        reward_amount: reward,
+        deep_questions: validQuestions,
+      },
+      {
+        onSuccess: () => {
+          toast.success("任务已更新");
+          onClose();
+        },
+        onError: (err) => toast.error("更新失败: " + err.message),
+      }
+    );
+  };
+
+  const inputClass =
+    "w-full bg-background/50 border border-border/30 rounded-lg px-2.5 py-2 text-xs text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/30 transition-all";
+
+  return (
+    <form onSubmit={handleSubmit} className="border border-primary/30 rounded-lg p-3 space-y-3 bg-primary/5">
+      {/* 任务类型选择 */}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => setTaskType("book")}
+          className={`flex-1 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+            taskType === "book"
+              ? "bg-primary/15 text-primary border-primary/40"
+              : "bg-muted/10 text-muted-foreground border-border/30 hover:border-border"
+          }`}
+        >
+          📚 完本大赏
+        </button>
+        <button
+          type="button"
+          onClick={() => setTaskType("movie")}
+          className={`flex-1 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+            taskType === "movie"
+              ? "bg-secondary/15 text-secondary border-secondary/40"
+              : "bg-muted/10 text-muted-foreground border-border/30 hover:border-border"
+          }`}
+        >
+          🎬 光影计划
+        </button>
+      </div>
+
+      <input
+        type="text"
+        value={itemName}
+        onChange={(e) => setItemName(e.target.value)}
+        placeholder={taskType === "book" ? "书名" : "影片名"}
+        className={inputClass}
+        required
+      />
+
+      <div className="flex gap-2">
+        <input
+          type="number"
+          value={rewardAmount}
+          onChange={(e) => setRewardAmount(e.target.value)}
+          placeholder="奖励金额（¥）"
+          className={`flex-1 ${inputClass}`}
+          min="1"
+          required
+        />
+        <div className="flex gap-1">
+          {taskType === "book" ? (
+            <>
+              <PresetButton value={DEFAULT_BOOK_REWARD.high} onClick={() => setRewardAmount(String(DEFAULT_BOOK_REWARD.high))} />
+              <PresetButton value={DEFAULT_BOOK_REWARD.medium} onClick={() => setRewardAmount(String(DEFAULT_BOOK_REWARD.medium))} />
+              <PresetButton value={DEFAULT_BOOK_REWARD.low} onClick={() => setRewardAmount(String(DEFAULT_BOOK_REWARD.low))} />
+            </>
+          ) : (
+            <PresetButton value={DEFAULT_MOVIE_REWARD} onClick={() => setRewardAmount(String(DEFAULT_MOVIE_REWARD))} />
+          )}
+        </div>
+      </div>
+
+      {/* 深度思考题 */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-foreground/70">深度思考题</span>
+          <button
+            type="button"
+            onClick={() => setQuestions([...questions, ""])}
+            className="text-[10px] text-primary flex items-center gap-1 hover:underline"
+          >
+            <Plus className="size-3" />
+            添加问题
+          </button>
+        </div>
+        {questions.map((q, idx) => (
+          <div key={idx} className="flex gap-2">
+            <span className="text-[10px] text-muted-foreground/50 shrink-0 pt-2.5">Q{idx + 1}.</span>
+            <input
+              type="text"
+              value={q}
+              onChange={(e) => {
+                const newQ = [...questions];
+                newQ[idx] = e.target.value;
+                setQuestions(newQ);
+              }}
+              placeholder={`思考题 ${idx + 1}`}
+              className={`flex-1 ${inputClass}`}
+            />
+            {questions.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setQuestions(questions.filter((_, i) => i !== idx))}
+                className="text-muted-foreground/50 hover:text-destructive transition-colors"
+              >
+                <X className="size-4" />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-2">
+        <Button type="button" variant="outline" size="sm" className="flex-1" onClick={onClose}>
+          取消
+        </Button>
+        <Button type="submit" size="sm" className="flex-1" disabled={editTask.isPending}>
+          {editTask.isPending ? "保存中..." : "保存修改"}
+        </Button>
+      </div>
+    </form>
   );
 }
 

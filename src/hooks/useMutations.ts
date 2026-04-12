@@ -176,6 +176,47 @@ export function useInsertMajorExam(monthId: string) {
   });
 }
 
+interface EditAcademicInput {
+  id: number;
+  event_date: string;
+  subject: string;
+  score: number;
+  max_score: number;
+  is_retest?: boolean;
+  is_pass_fail?: boolean;
+  exam_name?: string;
+  class_avg?: number | null;
+  highest_score?: number | null;
+  class_rank?: number | null;
+}
+
+export function useEditAcademicRecord(monthId: string) {
+  const inv = useInvalidate(monthId);
+  return useMutation({
+    mutationFn: async (input: EditAcademicInput) => {
+      const record: Record<string, unknown> = {
+        event_date: input.event_date,
+        subject: input.subject,
+        score: input.score,
+        max_score: input.max_score,
+        is_retest: input.is_retest ?? false,
+        is_pass_fail: input.is_pass_fail ?? false,
+      };
+      if (input.exam_name !== undefined) record.exam_name = input.exam_name;
+      if (input.class_avg !== undefined) record.class_avg = input.class_avg;
+      if (input.highest_score !== undefined) record.highest_score = input.highest_score;
+      if (input.class_rank !== undefined) record.class_rank = input.class_rank;
+
+      const { error } = await supabase
+        .from('academic_records')
+        .update(record)
+        .eq('id', input.id);
+      if (error) throw error;
+    },
+    onSuccess: () => inv.academics(),
+  });
+}
+
 interface RatingInput {
   recordId: number;
   rating: 'bonus' | 'neutral' | 'penalty';

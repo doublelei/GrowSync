@@ -13,6 +13,7 @@ import {
   useUpsertMonthlyPoints,
   useUpsertHabit,
   useDeleteRecord,
+  useEditAcademicRecord,
   useApproveHabitProof,
   useRejectHabitProof,
   checkDuplicateAcademic,
@@ -68,6 +69,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
   const [ratingRecordId, setRatingRecordId] = useState<number | null>(null);
+  const [editingRecordId, setEditingRecordId] = useState<number | null>(null);
   // P/F mode state for micro test form
   const [isPassFail, setIsPassFail] = useState(false);
   const [pfResult, setPfResult] = useState<'pass' | 'fail' | null>(null);
@@ -81,6 +83,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
   const upsertMonthlyPoints = useUpsertMonthlyPoints(monthId);
   const upsertHabit = useUpsertHabit(monthId);
   const deleteRecord = useDeleteRecord(monthId);
+  const editAcademic = useEditAcademicRecord(monthId);
   const approveHabitProof = useApproveHabitProof(monthId);
   const rejectHabitProof = useRejectHabitProof(monthId);
   const updateRating = useUpdateMajorExamRating(monthId);
@@ -422,6 +425,20 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
             <div className="text-xs font-semibold text-foreground mb-2">本月成绩</div>
             <div className="divide-y divide-border/50 max-h-64 overflow-y-auto border border-border/50 rounded-md">
               {[...academicRecords].sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime()).map((r) => (
+                editingRecordId === r.id ? (
+                  <EditAcademicForm
+                    key={r.id}
+                    record={r}
+                    isPending={editAcademic.isPending}
+                    onSave={(input) => {
+                      editAcademic.mutate(input, {
+                        onSuccess: () => { setEditingRecordId(null); toast.success('记录已更新'); },
+                        onError: (err) => toast.error('更新失败: ' + err.message),
+                      });
+                    }}
+                    onCancel={() => setEditingRecordId(null)}
+                  />
+                ) : (
                 <div key={r.id} className="p-3 flex items-center justify-between text-xs">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
@@ -445,18 +462,27 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
                       {r.exam_name || (r.event_type === 'micro_test' ? '小测' : r.event_type === 'major_exam' ? '大考' : r.event_type)} · {r.score}/{r.max_score}
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleDeleteRecord('academic_records', r.id)}
-                    disabled={deleteRecord.isPending}
-                    className={`ml-2 text-[10px] px-1.5 py-1 rounded transition-colors disabled:opacity-50 ${
-                      confirmingDelete === `academic_records-${r.id}`
-                        ? 'text-destructive font-semibold'
-                        : 'text-destructive/60 hover:text-destructive'
-                    }`}
-                  >
-                    {confirmingDelete === `academic_records-${r.id}` ? '确认?' : '删除'}
-                  </button>
+                  <div className="flex items-center gap-1 ml-2">
+                    <button
+                      onClick={() => setEditingRecordId(r.id)}
+                      className="text-[10px] px-1.5 py-1 rounded transition-colors text-primary/60 hover:text-primary"
+                    >
+                      编辑
+                    </button>
+                    <button
+                      onClick={() => handleDeleteRecord('academic_records', r.id)}
+                      disabled={deleteRecord.isPending}
+                      className={`text-[10px] px-1.5 py-1 rounded transition-colors disabled:opacity-50 ${
+                        confirmingDelete === `academic_records-${r.id}`
+                          ? 'text-destructive font-semibold'
+                          : 'text-destructive/60 hover:text-destructive'
+                      }`}
+                    >
+                      {confirmingDelete === `academic_records-${r.id}` ? '确认?' : '删除'}
+                    </button>
+                  </div>
                 </div>
+                )
               ))}
               {academicRecords.length === 0 && (
                 <div className="p-4 text-center text-xs text-muted-foreground">暂无成绩记录</div>
@@ -591,6 +617,85 @@ function HabitProofReviewItem({ proof, onApprove, onReject, approving, rejecting
         </button>
       </div>
     </div>
+  );
+}
+
+function EditAcademicForm({ record, isPending, onSave, onCancel }: {
+  record: AcademicRecord;
+  isPending: boolean;
+  onSave: (input: {
+    id: number; event_date: string; subject: string; score: number; max_score: number;
+    is_retest?: boolean; is_pass_fail?: boolean; exam_name?: string;
+    class_avg?: number | null; highest_score?: number | null; class_rank?: number | null;
+  }) => void;
+  onCancel: () => void;
+}) {
+  const [date, setDate] = useState(record.event_date);
+  const [subject, setSubject] = useState(record.subject);
+  const [score, setScore] = useState(String(record.score));
+  const [maxScore, setMaxScore] = useState(String(record.max_score));
+  const [isRetest, setIsRetest] = useState(record.is_retest ?? false);
+  const [examName, setExamName] = useState(record.exam_name ?? '');
+  const [classAvg, setClassAvg] = useState(record.class_avg != null ? String(record.class_avg) : '');
+  const [highestScore, setHighestScore] = useState(record.highest_score != null ? String(record.highest_score) : '');
+  const [classRank, setClassRank] = useState(record.class_rank != null ? String(record.class_rank) : '');
+
+  const isMajor = record.event_type === 'major_exam';
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!date || !subject || !score || !maxScore) { toast.error('必填项为空'); return; }
+    onSave({
+      id: record.id,
+      event_date: date,
+      subject,
+      score: Number(score),
+      max_score: Number(maxScore),
+      is_retest: isRetest,
+      is_pass_fail: record.is_pass_fail,
+      ...(isMajor && {
+        exam_name: examName || undefined,
+        class_avg: classAvg ? Number(classAvg) : null,
+        highest_score: highestScore ? Number(highestScore) : null,
+        class_rank: classRank ? Number(classRank) : null,
+      }),
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="p-3 space-y-2 bg-primary/5">
+      <div className="grid grid-cols-2 gap-2">
+        <input type="date" value={date} onChange={e => setDate(e.target.value)} className={inputClass} required />
+        <select value={subject} onChange={e => setSubject(e.target.value)} className={selectClass}>
+          {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
+      {isMajor && (
+        <input type="text" value={examName} onChange={e => setExamName(e.target.value)} placeholder="考试名称" className={inputClass} />
+      )}
+      <div className="flex items-center gap-2">
+        <input type="number" step="0.5" value={score} onChange={e => setScore(e.target.value)} placeholder="得分" className={`flex-1 ${inputClass}`} required />
+        <span className="text-muted-foreground text-xs">/</span>
+        <input type="number" value={maxScore} onChange={e => setMaxScore(e.target.value)} placeholder="满分" className={`flex-1 ${inputClass}`} required />
+      </div>
+      {isMajor && (
+        <div className="flex gap-2">
+          <input type="number" step="0.1" value={classAvg} onChange={e => setClassAvg(e.target.value)} placeholder="班均分" className={`w-1/3 ${inputClass}`} />
+          <input type="number" step="0.5" value={highestScore} onChange={e => setHighestScore(e.target.value)} placeholder="最高分" className={`w-1/3 ${inputClass}`} />
+          <input type="number" value={classRank} onChange={e => setClassRank(e.target.value)} placeholder="排名" className={`w-1/3 ${inputClass}`} />
+        </div>
+      )}
+      <div className="flex items-center gap-1.5">
+        <input type="checkbox" checked={isRetest} onChange={e => setIsRetest(e.target.checked)} id={`edit-retest-${record.id}`} className="w-3.5 h-3.5 accent-primary" />
+        <label htmlFor={`edit-retest-${record.id}`} className="text-xs text-muted-foreground cursor-pointer">重考成绩</label>
+      </div>
+      <div className="flex gap-2">
+        <Button type="button" variant="outline" size="sm" className="flex-1 text-xs" onClick={onCancel}>取消</Button>
+        <Button type="submit" size="sm" className="flex-1 text-xs" disabled={isPending}>
+          {isPending ? '保存中...' : '保存'}
+        </Button>
+      </div>
+    </form>
   );
 }
 
