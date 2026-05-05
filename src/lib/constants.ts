@@ -2,14 +2,14 @@
 export const PLAYER_ID = '雷雨声';
 
 // ── Subjects ──
-export const SUBJECTS = ['英语', '数学', '语文', '历史', '生物'] as const;
+export const SUBJECTS = ['英语', '数学', '语文', '历史', '生物', '道法', '地理'] as const;
 export type Subject = (typeof SUBJECTS)[number];
 
 /**
- * Subjects that use Pass/Fail (P/F) grading instead of numeric scores.
- * To add a new P/F subject: add it to SUBJECTS above, then add its name here.
+ * Subjects whose micro tests default to Pass/Fail (P/F) grading.
+ * Major exams always use numeric scoring regardless of this set.
  */
-export const PASS_FAIL_SUBJECTS = new Set<string>(['历史', '生物']);
+export const PASS_FAIL_SUBJECTS = new Set<string>(['历史', '生物', '道法', '地理']);
 
 // ── Strike Thresholds ──
 // English has a lower bar (90); all other subjects use 95
