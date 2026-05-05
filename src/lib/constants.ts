@@ -29,6 +29,7 @@ export const RATING_REASON_PRESETS = ['试卷偏难', '进步明显', '退步明
 // ── Pool Amounts ──
 export const BASE_POOL = 300;
 export const HABIT_REWARD_PER_TYPE = 25;   // ¥25 for exercise, ¥25 for reading
+export const HABIT_PENALTY_PER_TYPE = 25;  // ¥25 deducted per missed type (after week ends)
 export const WEEKLY_HABIT_CAP = 50;        // HABIT_REWARD_PER_TYPE × 2
 export const WEEKLY_ACADEMIC_BASE = 100;   // ¥100 per week before strikes
 export const MONTHLY_RANK_CAP = 200;       // ±¥200 range

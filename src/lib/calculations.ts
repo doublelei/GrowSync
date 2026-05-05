@@ -25,10 +25,12 @@ import {
   MAJOR_EXAM_PENALTY_RANK,
   BASE_POOL,
   HABIT_REWARD_PER_TYPE,
+  HABIT_PENALTY_PER_TYPE,
   WEEKLY_HABIT_CAP,
   WEEKLY_ACADEMIC_BASE,
   MONTHLY_RANK_CAP,
   CLASS_SIZE,
+  nowBeijing,
 } from './constants';
 
 // ── Major Exam Rating ──
@@ -58,6 +60,7 @@ export function calculateWeeklyQuests(
   weeks: WeekPeriod[],
   habits: HabitLog[],
   academics: AcademicRecord[],
+  referenceDate: Date = nowBeijing(),
 ): WeeklyQuestState[] {
   // Parse "YYYY-MM-DD" as local midnight (not UTC) to avoid timezone shifts
   const parseLocal = (s: string) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
@@ -80,8 +83,18 @@ export function calculateWeeklyQuests(
       h => (h.dateObj.getDay() === 0 || h.dateObj.getDay() === 6) && h.habit_type === '阅读',
     );
 
-    const exerciseEarned = weekendExercise ? HABIT_REWARD_PER_TYPE : 0;
-    const readingEarned = weekendReading ? HABIT_REWARD_PER_TYPE : 0;
+    // Penalty only applies once the week has fully ended
+    const weekEnded = endOfDay < referenceDate;
+    const exerciseEarned = weekendExercise
+      ? HABIT_REWARD_PER_TYPE
+      : (weekEnded ? -HABIT_PENALTY_PER_TYPE : 0);
+    const readingEarned = weekendReading
+      ? HABIT_REWARD_PER_TYPE
+      : (weekEnded ? -HABIT_PENALTY_PER_TYPE : 0);
+    const exerciseStatus: 'completed' | 'pending' | 'failed' =
+      weekendExercise ? 'completed' : (weekEnded ? 'failed' : 'pending');
+    const readingStatus: 'completed' | 'pending' | 'failed' =
+      weekendReading ? 'completed' : (weekEnded ? 'failed' : 'pending');
 
     // Academic strike system (only micro_tests count — major exams excluded)
     const academicsThisWeek = academicsWithDate.filter(
@@ -134,8 +147,8 @@ export function calculateWeeklyQuests(
         startDate: w.startDate,
         endDate: w.endDate,
       },
-      exercise: { earned: exerciseEarned, status: exerciseEarned >= HABIT_REWARD_PER_TYPE ? 'completed' : 'pending' },
-      reading: { earned: readingEarned, status: readingEarned >= HABIT_REWARD_PER_TYPE ? 'completed' : 'pending' },
+      exercise: { earned: exerciseEarned, status: exerciseStatus },
+      reading: { earned: readingEarned, status: readingStatus },
       academic: { earned: academicPoolRemaining, strikes, deductions, examAdjustments },
     };
   });

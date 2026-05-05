@@ -103,12 +103,15 @@ describe('calculateWeeklyQuests', () => {
     endDate: new Date(2026, 2, 8),   // Sun Mar 8
     start: '3月2日', end: '3月8日',
   };
+  // Mid-week reference so the week is still "ongoing" — penalty does not trigger
+  const midWeek = new Date(2026, 2, 5);
+  const afterWeek = new Date(2026, 2, 9); // Mon Mar 9 — week has ended
 
   it('awards exercise when logged on weekend', () => {
     const habits: HabitLog[] = [
       { id: 1, player_id: 'test', log_date: '2026-03-07', habit_type: '运动', created_at: '' }, // Sat
     ];
-    const result = calculateWeeklyQuests([week], habits, []);
+    const result = calculateWeeklyQuests([week], habits, [], midWeek);
     expect(result[0].exercise.earned).toBe(25);
     expect(result[0].exercise.status).toBe('completed');
   });
@@ -117,8 +120,37 @@ describe('calculateWeeklyQuests', () => {
     const habits: HabitLog[] = [
       { id: 1, player_id: 'test', log_date: '2026-03-03', habit_type: '运动', created_at: '' }, // Tue
     ];
-    const result = calculateWeeklyQuests([week], habits, []);
+    const result = calculateWeeklyQuests([week], habits, [], midWeek);
     expect(result[0].exercise.earned).toBe(0);
+    expect(result[0].exercise.status).toBe('pending');
+  });
+
+  it('penalizes -25 when week ends with no exercise check-in', () => {
+    const result = calculateWeeklyQuests([week], [], [], afterWeek);
+    expect(result[0].exercise.earned).toBe(-25);
+    expect(result[0].exercise.status).toBe('failed');
+  });
+
+  it('penalizes -25 when week ends with no reading check-in', () => {
+    const result = calculateWeeklyQuests([week], [], [], afterWeek);
+    expect(result[0].reading.earned).toBe(-25);
+    expect(result[0].reading.status).toBe('failed');
+  });
+
+  it('does not penalize ongoing week with no check-in', () => {
+    const result = calculateWeeklyQuests([week], [], [], midWeek);
+    expect(result[0].exercise.earned).toBe(0);
+    expect(result[0].reading.earned).toBe(0);
+  });
+
+  it('rewards normally even after week ended if check-in exists', () => {
+    const habits: HabitLog[] = [
+      { id: 1, player_id: 'test', log_date: '2026-03-07', habit_type: '运动', created_at: '' },
+      { id: 2, player_id: 'test', log_date: '2026-03-08', habit_type: '阅读', created_at: '' },
+    ];
+    const result = calculateWeeklyQuests([week], habits, [], afterWeek);
+    expect(result[0].exercise.earned).toBe(25);
+    expect(result[0].reading.earned).toBe(25);
   });
 
   it('counts strike for English score below 90', () => {
@@ -126,7 +158,7 @@ describe('calculateWeeklyQuests', () => {
       id: 1, player_id: 'test', event_date: '2026-03-03', event_type: 'micro_test',
       subject: '英语', score: 85, max_score: 100, created_at: '',
     }];
-    const result = calculateWeeklyQuests([week], [], academics);
+    const result = calculateWeeklyQuests([week], [], academics, midWeek);
     expect(result[0].academic.strikes).toBe(1);
     expect(result[0].academic.earned).toBe(80); // 100 - 20
   });
@@ -136,7 +168,7 @@ describe('calculateWeeklyQuests', () => {
       id: 1, player_id: 'test', event_date: '2026-03-03', event_type: 'micro_test',
       subject: '数学', score: 92, max_score: 100, created_at: '',
     }];
-    const result = calculateWeeklyQuests([week], [], academics);
+    const result = calculateWeeklyQuests([week], [], academics, midWeek);
     expect(result[0].academic.strikes).toBe(1);
   });
 
@@ -145,7 +177,7 @@ describe('calculateWeeklyQuests', () => {
       id: 1, player_id: 'test', event_date: '2026-03-03', event_type: 'micro_test',
       subject: '历史', score: 0, max_score: 100, is_pass_fail: true, created_at: '',
     }];
-    const result = calculateWeeklyQuests([week], [], academics);
+    const result = calculateWeeklyQuests([week], [], academics, midWeek);
     expect(result[0].academic.strikes).toBe(1);
   });
 
@@ -154,7 +186,7 @@ describe('calculateWeeklyQuests', () => {
       id: 1, player_id: 'test', event_date: '2026-03-03', event_type: 'micro_test',
       subject: '历史', score: 1, max_score: 1, is_pass_fail: true, created_at: '',
     }];
-    const result = calculateWeeklyQuests([week], [], academics);
+    const result = calculateWeeklyQuests([week], [], academics, midWeek);
     expect(result[0].academic.strikes).toBe(0);
   });
 
@@ -163,7 +195,7 @@ describe('calculateWeeklyQuests', () => {
       id: 1, player_id: 'test', event_date: '2026-03-03', event_type: 'major_exam',
       subject: '数学', score: 95, max_score: 100, major_exam_rating: 'bonus', created_at: '',
     }];
-    const result = calculateWeeklyQuests([week], [], academics);
+    const result = calculateWeeklyQuests([week], [], academics, midWeek);
     expect(result[0].academic.examAdjustments).toHaveLength(1);
     expect(result[0].academic.examAdjustments[0].amount).toBe(25);
     expect(result[0].academic.earned).toBe(125); // 100 + 25
@@ -174,7 +206,7 @@ describe('calculateWeeklyQuests', () => {
       id: i, player_id: 'test', event_date: '2026-03-03', event_type: 'micro_test' as const,
       subject: '数学', score: 50, max_score: 100, created_at: '',
     }));
-    const result = calculateWeeklyQuests([week], [], academics);
+    const result = calculateWeeklyQuests([week], [], academics, midWeek);
     expect(result[0].academic.earned).toBe(0); // max(0, 100 - 120)
   });
 });
@@ -202,6 +234,7 @@ describe('aggregatePlayerData', () => {
       }],
       [{ id: 1, player_id: 'test', log_date: '2026-03-07', habit_type: '运动', created_at: '' }],
       [],
+      new Date(2026, 2, 5),
     );
     const data = aggregatePlayerData('test', quests, 100, 5, 4, []);
     expect(data.basePool).toBe(300);

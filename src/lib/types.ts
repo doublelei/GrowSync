@@ -89,8 +89,8 @@ export interface WeekPeriod {
 export interface WeeklyQuestState {
   week: number;
   period: { start: string; end: string; startDate: Date; endDate: Date };
-  exercise: { earned: number; status: 'pending' | 'completed' };
-  reading: { earned: number; status: 'pending' | 'completed' };
+  exercise: { earned: number; status: 'pending' | 'completed' | 'failed' };
+  reading: { earned: number; status: 'pending' | 'completed' | 'failed' };
   academic: {
     earned: number;
     strikes: number;

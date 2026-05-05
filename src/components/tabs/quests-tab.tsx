@@ -151,7 +151,7 @@ export function QuestsTab({ weeklyQuests, currentWeekIndex, monthId, habitProofs
         <div className="h-0.5 bg-muted/20">
           <div
             className="h-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-700"
-            style={{ width: `${(week.exercise.earned / HABIT_REWARD_PER_TYPE) * 100}%` }}
+            style={{ width: `${Math.max(0, (week.exercise.earned / HABIT_REWARD_PER_TYPE) * 100)}%` }}
           />
         </div>
       </div>
@@ -222,7 +222,7 @@ export function QuestsTab({ weeklyQuests, currentWeekIndex, monthId, habitProofs
         <div className="h-0.5 bg-muted/20">
           <div
             className="h-full bg-gradient-to-r from-secondary to-secondary/60 transition-all duration-700"
-            style={{ width: `${(week.reading.earned / HABIT_REWARD_PER_TYPE) * 100}%` }}
+            style={{ width: `${Math.max(0, (week.reading.earned / HABIT_REWARD_PER_TYPE) * 100)}%` }}
           />
         </div>
       </div>
