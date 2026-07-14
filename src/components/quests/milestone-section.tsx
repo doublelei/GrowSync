@@ -58,7 +58,7 @@ export function MilestoneSection({ tasks, monthId }: MilestoneSectionProps) {
 
       {/* 空状态 */}
       {activeTasks.length === 0 && completedCount > 0 && (
-        <div className="glass-card rounded-xl p-4 text-center">
+        <div className="bg-card border border-border shadow-sm rounded-xl p-4 text-center">
           <p className="text-xs text-muted-foreground/60">暂无进行中的任务</p>
           <p className="text-[10px] text-muted-foreground/40 mt-1">等待家长发布新任务...</p>
         </div>
@@ -83,7 +83,7 @@ function MilestoneTaskItem({ task, monthId, isExpanded, onToggle }: MilestoneTas
       case "draft":
         return <Badge variant="outline" className="text-[10px] px-2 py-0.5 text-muted-foreground/50 border-border/30">草稿</Badge>;
       case "under_review":
-        return <Badge variant="outline" className="text-[10px] px-2 py-0.5 text-yellow-400 border-yellow-400/30 bg-yellow-400/5">审核中</Badge>;
+        return <Badge variant="outline" className="text-[10px] px-2 py-0.5 text-amber-600 dark:text-amber-400 border-amber-500/30 bg-amber-500/5">审核中</Badge>;
       case "rejected":
         return <Badge variant="outline" className="text-[10px] px-2 py-0.5 text-destructive border-destructive/30 bg-destructive/5">需修改</Badge>;
       default:
@@ -92,7 +92,7 @@ function MilestoneTaskItem({ task, monthId, isExpanded, onToggle }: MilestoneTas
   };
 
   return (
-    <div className={`glass-card rounded-xl overflow-hidden transition-all duration-300 ${isExpanded ? 'border-primary/20' : ''}`}>
+    <div className={`bg-card border shadow-sm rounded-xl overflow-hidden transition-all duration-300 ${isExpanded ? 'border-primary/40' : 'border-border'}`}>
       {/* 任务头部 - 始终显示 */}
       <button
         onClick={onToggle}

@@ -10,7 +10,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>{children}</ErrorBoundary>
       <Toaster
-        theme="dark"
+        theme="system"
         position="top-center"
         toastOptions={{
           style: {

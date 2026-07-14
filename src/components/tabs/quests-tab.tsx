@@ -78,7 +78,7 @@ export function QuestsTab({ weeklyQuests, currentWeekIndex, monthId, habitProofs
 
   const statusBadge = (ps: ProofStatus, earned: number) => {
     if (earned > 0) return <Badge variant="default" className="text-[10px] px-2.5 py-0.5 bg-primary/15 text-primary border border-primary/20 font-mono">DONE</Badge>;
-    if (ps === 'pending') return <Badge variant="outline" className="text-[10px] px-2.5 py-0.5 text-yellow-400 border-yellow-400/30 bg-yellow-400/5 font-mono">PENDING</Badge>;
+    if (ps === 'pending') return <Badge variant="outline" className="text-[10px] px-2.5 py-0.5 text-amber-600 dark:text-amber-400 border-amber-500/30 bg-amber-500/5 font-mono">PENDING</Badge>;
     if (ps === 'rejected') return <Badge variant="outline" className="text-[10px] px-2.5 py-0.5 text-destructive border-destructive/30 bg-destructive/5 font-mono">REJECTED</Badge>;
     return <Badge variant="outline" className="text-[10px] px-2.5 py-0.5 text-muted-foreground/50 border-border/30 font-mono">OPEN</Badge>;
   };
@@ -97,7 +97,7 @@ export function QuestsTab({ weeklyQuests, currentWeekIndex, monthId, habitProofs
   return (
     <div className="space-y-4 stagger-children">
       {/* Week info bar */}
-      <div className="glass-card rounded-xl p-3 flex justify-between items-center">
+      <div className="bg-card border border-border shadow-sm rounded-xl p-3 flex justify-between items-center">
         <div className="flex flex-col gap-0.5">
           <span className="text-xs font-semibold text-foreground/80">本周任务</span>
           <span className="text-[9px] text-muted-foreground/50">周末完成运动和阅读各一次即可</span>
@@ -108,7 +108,7 @@ export function QuestsTab({ weeklyQuests, currentWeekIndex, monthId, habitProofs
       </div>
 
       {/* Exercise Quest Card */}
-      <div className={`glass-card rounded-xl overflow-hidden transition-all duration-300 ${week.exercise.earned > 0 ? 'border-primary/20 glow-primary' : ''}`}>
+      <div className={`bg-card border shadow-sm rounded-xl overflow-hidden transition-all duration-300 ${week.exercise.earned > 0 ? 'border-primary/40' : 'border-border'}`}>
         <div className="p-4">
           <div className="flex justify-between items-start mb-3">
             <div className="flex items-center gap-2">
@@ -139,7 +139,7 @@ export function QuestsTab({ weeklyQuests, currentWeekIndex, monthId, habitProofs
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={submitExercise.isPending}
-                  className="text-xs font-semibold px-4 py-2 rounded-lg transition-all bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-[0_0_15px_oklch(0.82_0.22_155/0.3)] disabled:opacity-50 focus:outline-none"
+                  className="text-xs font-semibold px-4 py-2 rounded-lg transition-all bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 focus:outline-none"
                 >
                   {submitExercise.isPending ? '上传中...' : '上传运动照片'}
                 </button>
@@ -148,20 +148,20 @@ export function QuestsTab({ weeklyQuests, currentWeekIndex, monthId, habitProofs
           </div>
         </div>
         {/* Progress bar at bottom */}
-        <div className="h-0.5 bg-muted/20">
+        <div className="h-0.5 bg-muted">
           <div
-            className="h-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-700"
+            className="h-full bg-primary transition-all duration-700"
             style={{ width: `${Math.max(0, (week.exercise.earned / HABIT_REWARD_PER_TYPE) * 100)}%` }}
           />
         </div>
       </div>
 
       {/* Reading Quest Card */}
-      <div className={`glass-card rounded-xl overflow-hidden transition-all duration-300 ${week.reading.earned > 0 ? 'border-secondary/20 glow-secondary' : ''}`}>
+      <div className={`bg-card border shadow-sm rounded-xl overflow-hidden transition-all duration-300 ${week.reading.earned > 0 ? 'border-(--chart-5)/40' : 'border-border'}`}>
         <div className="p-4">
           <div className="flex justify-between items-start mb-3">
             <div className="flex items-center gap-2">
-              <div className={`size-8 rounded-lg flex items-center justify-center text-sm ${week.reading.earned > 0 ? 'bg-secondary/15 text-secondary' : 'bg-muted/30 text-muted-foreground/50'}`}>
+              <div className={`size-8 rounded-lg flex items-center justify-center text-sm ${week.reading.earned > 0 ? 'bg-(--chart-5)/15 text-(--chart-5)' : 'bg-muted/30 text-muted-foreground/50'}`}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2.5 3v10l5.5-2 5.5 2V3L8 5 2.5 3z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M8 5v8" stroke="currentColor" strokeWidth="1.5"/></svg>
               </div>
               <span className="text-sm font-semibold">周末阅读</span>
@@ -194,7 +194,7 @@ export function QuestsTab({ weeklyQuests, currentWeekIndex, monthId, habitProofs
                   <button
                     onClick={handleReadingSubmit}
                     disabled={submitReading.isPending || readingText.length < 100}
-                    className="text-xs font-semibold px-4 py-1.5 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/90 disabled:opacity-50 transition-all"
+                    className="text-xs font-semibold px-4 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-all"
                   >
                     {submitReading.isPending ? '提交中...' : '提交归纳'}
                   </button>
@@ -210,7 +210,7 @@ export function QuestsTab({ weeklyQuests, currentWeekIndex, monthId, habitProofs
               {canSubmitReading && (
                 <button
                   onClick={() => setShowReadingForm(true)}
-                  className="text-xs font-semibold px-4 py-2 rounded-lg transition-all bg-secondary text-secondary-foreground hover:bg-secondary/90 hover:shadow-[0_0_15px_oklch(0.55_0.28_290/0.3)] focus:outline-none"
+                  className="text-xs font-semibold px-4 py-2 rounded-lg transition-all bg-primary text-primary-foreground hover:bg-primary/90 focus:outline-none"
                 >
                   写阅读归纳
                 </button>
@@ -219,9 +219,9 @@ export function QuestsTab({ weeklyQuests, currentWeekIndex, monthId, habitProofs
           )}
         </div>
         {/* Progress bar at bottom */}
-        <div className="h-0.5 bg-muted/20">
+        <div className="h-0.5 bg-muted">
           <div
-            className="h-full bg-gradient-to-r from-secondary to-secondary/60 transition-all duration-700"
+            className="h-full bg-(--chart-5) transition-all duration-700"
             style={{ width: `${Math.max(0, (week.reading.earned / HABIT_REWARD_PER_TYPE) * 100)}%` }}
           />
         </div>

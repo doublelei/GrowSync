@@ -35,7 +35,7 @@ function Section({ id, title, description, activeSection, onToggle, children }: 
 }) {
   const isOpen = activeSection === id;
   return (
-    <div className="glass-card rounded-xl overflow-hidden">
+    <div className="bg-card border border-border shadow-sm rounded-xl overflow-hidden">
       <button
         onClick={() => onToggle(id)}
         className="w-full p-4 flex items-center justify-between text-left transition-colors hover:bg-primary/3"
@@ -247,7 +247,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
     <div className="space-y-4 stagger-children">
 
       {/* 1. Micro test — always visible */}
-      <div className="glass-card rounded-xl overflow-hidden">
+      <div className="bg-card border border-border shadow-sm rounded-xl overflow-hidden">
         <div className="p-4 border-b border-border/20">
           <div className="text-sm font-semibold text-foreground">录入小测</div>
           <div className="text-[10px] text-muted-foreground/50 mt-0.5">记录日常小测成绩</div>
@@ -358,7 +358,7 @@ export function AdminTab({ pendingProofs, playerData, currentWeekNum, academicRe
 
       {/* 2b. Unrated major exams — rating confirmation */}
       {unratedMajorExams.length > 0 && (
-        <div className="glass-card rounded-xl overflow-hidden border-primary/20 glow-primary">
+        <div className="bg-card border border-primary/40 shadow-sm rounded-xl overflow-hidden">
           <div className="p-4 border-b border-primary/15">
             <div className="text-sm font-semibold text-primary">待评级大考</div>
             <div className="text-[10px] text-muted-foreground/50 mt-0.5">{unratedMajorExams.length} 条大考成绩等待评级</div>
@@ -604,7 +604,7 @@ function HabitProofReviewItem({ proof, onApprove, onReject, approving, rejecting
         <button
           onClick={onApprove}
           disabled={approving}
-          className="flex-1 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-semibold hover:bg-primary/15 hover:shadow-[0_0_10px_oklch(0.82_0.22_155/0.15)] transition-all focus:outline-none disabled:opacity-50"
+          className="flex-1 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-semibold hover:bg-primary/15 transition-all focus:outline-none disabled:opacity-50"
         >
           {approving ? '处理中...' : '通过'}
         </button>

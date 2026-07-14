@@ -14,7 +14,7 @@ function PoolCard({
   className?: string;
 }) {
   return (
-    <div className={`glass-card rounded-xl p-4 transition-all duration-300 hover:border-primary/20 ${className}`}>
+    <div className={`bg-card border border-border rounded-xl p-4 shadow-sm ${className}`}>
       {children}
     </div>
   );
@@ -54,7 +54,7 @@ export function DashboardTab({ playerData }: { playerData: PlayerData }) {
                 </button>
               </span>
             </div>
-            <div className="text-xl font-bold font-mono text-primary text-glow">
+            <div className="text-xl font-bold font-mono text-primary">
               &yen;{playerData.weeklyPoolEarned}
               <span className="text-xs text-muted-foreground font-normal ml-1.5">/ &yen;{playerData.weeklyPoolTotal}</span>
             </div>
@@ -62,7 +62,7 @@ export function DashboardTab({ playerData }: { playerData: PlayerData }) {
           {showWeekly && (
             <div className="space-y-2 mt-4 pt-3 border-t border-border/20">
               {playerData.weeklyQuests.map((w: WeeklyQuestState, idx: number) => (
-                <div key={idx} className="flex justify-between items-center bg-background/30 p-3 rounded-lg border border-border/20 transition-colors hover:border-primary/10">
+                <div key={idx} className="flex justify-between items-center bg-muted/40 p-3 rounded-lg border border-border/40">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-semibold text-foreground/80">W{w.week}</span>
                     <span className="text-[9px] text-muted-foreground/50 font-mono">{w.period.start} - {w.period.end}</span>
@@ -85,10 +85,10 @@ export function DashboardTab({ playerData }: { playerData: PlayerData }) {
         <PoolCard>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="size-2 rounded-full bg-secondary" />
+              <div className="size-2 rounded-full bg-(--chart-1)" />
               <span className="text-sm font-medium text-foreground/80 flex items-center gap-2">
                 考试奖励
-                <button onClick={() => setShowAcademic(!showAcademic)} className="text-[10px] bg-secondary/10 border border-secondary/20 px-2 py-0.5 rounded-full text-secondary/70 hover:text-secondary hover:bg-secondary/15 transition-all outline-none">
+                <button onClick={() => setShowAcademic(!showAcademic)} className="text-[10px] bg-(--chart-1)/10 border border-(--chart-1)/20 px-2 py-0.5 rounded-full text-(--chart-1) hover:bg-(--chart-1)/15 transition-all outline-none">
                   {showAcademic ? "收起" : "展开"}
                 </button>
               </span>
@@ -101,7 +101,7 @@ export function DashboardTab({ playerData }: { playerData: PlayerData }) {
           {showAcademic && (
             <div className="space-y-2 mt-4 pt-3 border-t border-border/20">
               {playerData.academicBonus.map((w: AcademicBonusState, idx: number) => (
-                <div key={idx} className="flex justify-between items-center bg-background/30 p-3 rounded-lg border border-border/20 transition-colors hover:border-secondary/10">
+                <div key={idx} className="flex justify-between items-center bg-muted/40 p-3 rounded-lg border border-border/40">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-semibold text-foreground/80">W{w.week}</span>
                     <span className="text-[9px] text-muted-foreground/50 font-mono">{w.period.start} - {w.period.end}</span>
