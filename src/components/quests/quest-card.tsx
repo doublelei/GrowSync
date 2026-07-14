@@ -114,8 +114,8 @@ export function QuestCard({ task, monthId }: QuestCardProps) {
       )}
 
       {isUnderReview && (
-        <div className="bg-yellow-400/5 border border-yellow-400/20 rounded-lg p-3">
-          <p className="text-xs text-yellow-400">已提交审核，请耐心等待</p>
+        <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3">
+          <p className="text-xs text-amber-600 dark:text-amber-400">已提交审核，请耐心等待</p>
         </div>
       )}
 

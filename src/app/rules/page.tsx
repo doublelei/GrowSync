@@ -5,12 +5,9 @@ import { ArrowLeft } from "lucide-react";
 
 export default function RulesPage() {
   return (
-    <div className="max-w-2xl mx-auto w-full flex flex-col min-h-[100dvh] bg-background border-r border-l border-border/30 relative noise">
-      {/* Top gradient */}
-      <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
-
-      <header className="px-5 py-4 flex items-center gap-3 z-10 sticky top-0 bg-background/80 backdrop-blur-md border-b border-border/40">
-        <Link href="/" className="text-muted-foreground hover:text-primary transition-all hover:drop-shadow-[0_0_6px_oklch(0.82_0.22_155/0.4)]">
+    <div className="max-w-2xl mx-auto w-full flex flex-col min-h-[100dvh] bg-background border-r border-l border-border/30 relative">
+      <header className="px-5 py-4 flex items-center gap-3 z-10 sticky top-0 bg-background/90 backdrop-blur-md border-b border-border/40">
+        <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">
           <ArrowLeft className="size-5" />
         </Link>
         <h1 className="text-lg font-bold tracking-tight text-foreground">
@@ -31,8 +28,8 @@ export default function RulesPage() {
               <Pool label="考试奖励" amount="¥100/周" desc="满分起步，扣分递减" color="secondary" />
               <Pool label="月度排名奖" amount="最高 ¥200" desc="依据班级排名" color="muted" />
             </div>
-            <p className="text-muted-foreground/50 text-[10px]">
-              假设一个月有 4 周，理论月度上限 = 300 + 4×50 + 4×100 + 200 = <span className="font-mono font-bold text-primary text-glow">¥1100</span>
+            <p className="text-muted-foreground/80 text-[10px]">
+              假设一个月有 4 周，理论月度上限 = 300 + 4×50 + 4×100 + 200 = <span className="font-mono font-bold text-primary">¥1100</span>
             </p>
           </div>
         </RuleCard>
@@ -46,7 +43,7 @@ export default function RulesPage() {
             <Rule text="运动打卡：完成即得 ¥25" />
             <Rule text="阅读打卡：完成即得 ¥25" />
             <Rule text="每周最多 ¥50（两项都完成）" />
-            <p className="text-muted-foreground/40 text-[10px] pt-1">
+            <p className="text-muted-foreground/80 text-[10px] pt-1">
               打卡需要提交凭证（运动照片 / 阅读归纳），审核通过后生效。
             </p>
           </div>
@@ -61,7 +58,7 @@ export default function RulesPage() {
               <Rule text="英语小测低于 90 分 → 扣 ¥20" warn />
               <Rule text="其它科目小测低于 95 分 → 扣 ¥20" warn />
             </div>
-            <p className="text-muted-foreground/40 text-[10px] pt-1">
+            <p className="text-muted-foreground/80 text-[10px] pt-1">
               每次扣 ¥20，扣完为止（最低 ¥0）。重考成绩不额外扣分。
             </p>
           </div>
@@ -82,7 +79,7 @@ export default function RulesPage() {
               <Rule text="确认前大考不影响考试奖励计算" />
               <Rule text="大考加分可使当周考试奖励超过 ¥100" />
             </div>
-            <p className="text-muted-foreground/40 text-[10px] pt-1">
+            <p className="text-muted-foreground/80 text-[10px] pt-1">
               期中/期末考试使用独立规则，此处暂不涉及。
             </p>
           </div>
@@ -99,7 +96,7 @@ export default function RulesPage() {
               <Tier rank="第 11 名" reward="-¥10" />
               <Tier rank="第 20 名" reward="-¥200" />
             </div>
-            <p className="text-muted-foreground/40 text-[10px] pt-1">
+            <p className="text-muted-foreground/80 text-[10px] pt-1">
               排名越靠前奖励越高，中间名次接近 ¥0，靠后则扣钱。按全班 20 人线性计算，四舍五入到 ¥5。
             </p>
           </div>
@@ -123,7 +120,7 @@ export default function RulesPage() {
 
 function RuleCard({ children }: { children: React.ReactNode }) {
   return (
-    <div className="glass-card rounded-xl p-4 space-y-3">
+    <div className="bg-card border border-border shadow-sm rounded-xl p-4 space-y-3">
       {children}
     </div>
   );
@@ -140,10 +137,10 @@ function RuleCardHeader({ children }: { children: React.ReactNode }) {
 
 function Pool({ label, amount, desc, color }: { label: string; amount: string; desc: string; color: string }) {
   return (
-    <div className="bg-background/30 border border-border/20 rounded-lg p-2.5 transition-colors hover:border-primary/10">
-      <div className="text-[10px] text-muted-foreground/50">{label}</div>
+    <div className="bg-muted/40 border border-border/40 rounded-lg p-2.5">
+      <div className="text-[10px] text-muted-foreground/80">{label}</div>
       <div className="font-mono font-bold text-sm text-foreground mt-0.5">{amount}</div>
-      <div className="text-[10px] text-muted-foreground/30 mt-0.5">{desc}</div>
+      <div className="text-[10px] text-muted-foreground/70 mt-0.5">{desc}</div>
     </div>
   );
 }
@@ -159,7 +156,7 @@ function Rule({ text, warn }: { text: string; warn?: boolean }) {
 
 function Tier({ rank, reward, highlight }: { rank: string; reward: string; highlight?: boolean }) {
   return (
-    <div className={`flex items-center justify-between p-2.5 rounded-lg transition-colors ${highlight ? "bg-primary/8 border border-primary/15" : "bg-background/30 border border-border/20"}`}>
+    <div className={`flex items-center justify-between p-2.5 rounded-lg ${highlight ? "bg-primary/8 border border-primary/15" : "bg-muted/40 border border-border/40"}`}>
       <span className="text-xs">{rank}</span>
       <span className={`font-mono font-bold text-sm ${highlight ? "text-primary" : "text-foreground/70"}`}>{reward}</span>
     </div>

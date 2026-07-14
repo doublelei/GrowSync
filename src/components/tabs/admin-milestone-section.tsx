@@ -121,7 +121,7 @@ function StatCard({
 }) {
   const colorClasses = {
     primary: "bg-primary/10 text-primary border-primary/20",
-    secondary: "bg-secondary/10 text-secondary border-secondary/20",
+    secondary: "bg-(--chart-5)/10 text-(--chart-5) border-(--chart-5)/20",
     emerald: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
   };
 
@@ -153,7 +153,7 @@ function CollapsiblePanel({
 }) {
   const isOpen = activePanel === id;
   return (
-    <div className="glass-card rounded-xl overflow-hidden">
+    <div className="bg-card border border-border shadow-sm rounded-xl overflow-hidden">
       <button
         onClick={() => onToggle(isOpen ? null : id)}
         className="w-full p-3 flex items-center justify-between text-left transition-colors hover:bg-primary/3"
@@ -258,7 +258,7 @@ function CreateTaskForm({ monthId }: { monthId: string }) {
           onClick={() => setTaskType("movie")}
           className={`flex-1 py-2 rounded-lg border text-xs font-semibold transition-all ${
             taskType === "movie"
-              ? "bg-secondary/15 text-secondary border-secondary/40"
+              ? "bg-(--chart-5)/15 text-(--chart-5) border-(--chart-5)/40"
               : "bg-muted/10 text-muted-foreground border-border/30 hover:border-border"
           }`}
         >
@@ -448,7 +448,7 @@ function PendingTaskCard({ task, monthId }: { task: MilestoneTask; monthId: stri
             )}
           </div>
         </div>
-        <Badge variant="outline" className="text-[10px] px-2 py-0 border-yellow-400/30 text-yellow-400 bg-yellow-400/5">
+        <Badge variant="outline" className="text-[10px] px-2 py-0 border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/5">
           审核中
         </Badge>
       </div>
@@ -651,7 +651,7 @@ function EditTaskForm({ task, monthId, onClose }: { task: MilestoneTask; monthId
           onClick={() => setTaskType("movie")}
           className={`flex-1 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
             taskType === "movie"
-              ? "bg-secondary/15 text-secondary border-secondary/40"
+              ? "bg-(--chart-5)/15 text-(--chart-5) border-(--chart-5)/40"
               : "bg-muted/10 text-muted-foreground border-border/30 hover:border-border"
           }`}
         >

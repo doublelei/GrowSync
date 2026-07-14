@@ -35,16 +35,17 @@ import {
 } from "@/components/ui/card";
 
 // ── Subject color mapping (shared between chart and badges) ──
-const SUBJECT_COLORS: Record<string, { chart: string; bg: string; text: string }> = {
-  "英语": { chart: "var(--chart-1)", bg: "bg-[oklch(0.85_0.25_145/0.15)]", text: "text-[oklch(0.85_0.25_145)]" },
-  "数学": { chart: "var(--chart-2)", bg: "bg-[oklch(0.6_0.28_290/0.15)]", text: "text-[oklch(0.75_0.2_290)]" },
-  "语文": { chart: "var(--chart-3)", bg: "bg-[oklch(0.65_0.25_25/0.15)]", text: "text-[oklch(0.75_0.2_25)]" },
-  "历史": { chart: "var(--chart-4)", bg: "bg-[oklch(0.78_0.15_60/0.15)]",  text: "text-[oklch(0.72_0.15_60)]" },
-  "生物": { chart: "var(--chart-5)", bg: "bg-[oklch(0.78_0.15_195/0.15)]", text: "text-[oklch(0.72_0.15_195)]" },
+// One fixed chart slot per subject; slots are a CVD-validated categorical
+// palette and red is deliberately absent — it is reserved for strike/penalty.
+const SUBJECT_COLORS: Record<string, string> = {
+  "英语": "var(--chart-1)",
+  "数学": "var(--chart-2)",
+  "语文": "var(--chart-3)",
+  "历史": "var(--chart-4)",
+  "生物": "var(--chart-5)",
+  "道法": "var(--chart-6)",
+  "地理": "var(--chart-7)",
 };
-const CHART_COLORS = Object.fromEntries(
-  Object.entries(SUBJECT_COLORS).map(([k, v]) => [k, v.chart]),
-);
 
 // ── Helpers ──
 function isStrike(r: AcademicRecord): boolean {
@@ -388,7 +389,7 @@ export default function RecordsPage() {
                 </div>
                 <div className="flex items-center gap-2.5 text-[9px] text-muted-foreground shrink-0 pt-0.5">
                   <span className="flex items-center gap-1"><span className="font-bold text-destructive/80">✕</span> 扣分</span>
-                  <span className="flex items-center gap-1"><span className="text-emerald-500">▲</span> 大考加分</span>
+                  <span className="flex items-center gap-1"><span className="text-primary">▲</span> 大考加分</span>
                   <span className="flex items-center gap-1"><span className="text-destructive/80">▼</span> 大考扣分</span>
                 </div>
               </div>
@@ -396,11 +397,7 @@ export default function RecordsPage() {
             <CardContent>
               <ResponsiveContainer width="100%" height={240}>
                 <LineChart data={chartData}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="var(--border)"
-                    opacity={0.5}
-                  />
+                  <CartesianGrid stroke="var(--border)" opacity={0.6} />
                   <XAxis
                     dataKey="date"
                     tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
@@ -424,7 +421,7 @@ export default function RecordsPage() {
                     <Line
                       type="monotone"
                       dataKey="score"
-                      stroke="var(--chart-1)"
+                      stroke={SUBJECT_COLORS[selectedSubject] || "var(--chart-1)"}
                       strokeWidth={2}
                       dot={(props: { cx?: number; cy?: number; index: number; payload: Record<string, unknown> }) => {
                         const { cx = 0, cy = 0, index, payload } = props;
@@ -434,50 +431,50 @@ export default function RecordsPage() {
                           const s = 4;
                           return (
                             <g key={`dot-${index}`}>
-                              <line x1={cx - s} y1={cy - s} x2={cx + s} y2={cy + s} stroke="oklch(0.637 0.237 25.331)" strokeWidth={2.5} strokeLinecap="round" />
-                              <line x1={cx + s} y1={cy - s} x2={cx - s} y2={cy + s} stroke="oklch(0.637 0.237 25.331)" strokeWidth={2.5} strokeLinecap="round" />
+                              <line x1={cx - s} y1={cy - s} x2={cx + s} y2={cy + s} stroke="var(--destructive)" strokeWidth={2.5} strokeLinecap="round" />
+                              <line x1={cx + s} y1={cy - s} x2={cx - s} y2={cy + s} stroke="var(--destructive)" strokeWidth={2.5} strokeLinecap="round" />
                             </g>
                           );
                         } else if (mrate === 'bonus') {
-                          return <polygon key={`dot-${index}`} points={`${cx},${cy - 5} ${cx + 4.5},${cy + 3} ${cx - 4.5},${cy + 3}`} fill="oklch(0.65 0.2 145)" />;
+                          return <polygon key={`dot-${index}`} points={`${cx},${cy - 5} ${cx + 4.5},${cy + 3} ${cx - 4.5},${cy + 3}`} fill="var(--primary)" />;
                         } else if (mrate === 'penalty') {
-                          return <polygon key={`dot-${index}`} points={`${cx},${cy + 5} ${cx + 4.5},${cy - 3} ${cx - 4.5},${cy - 3}`} fill="oklch(0.55 0.22 25)" />;
+                          return <polygon key={`dot-${index}`} points={`${cx},${cy + 5} ${cx + 4.5},${cy - 3} ${cx - 4.5},${cy - 3}`} fill="var(--destructive)" />;
                         } else if (mrate === 'unrated') {
-                          return <rect key={`dot-${index}`} x={cx - 3.5} y={cy - 3.5} width={7} height={7} rx={1} fill="oklch(0.6 0.05 280)" />;
+                          return <rect key={`dot-${index}`} x={cx - 3.5} y={cy - 3.5} width={7} height={7} rx={1} fill="var(--muted-foreground)" />;
                         }
-                        return <circle key={`dot-${index}`} cx={cx} cy={cy} r={3} fill="var(--chart-1)" />;
+                        return <circle key={`dot-${index}`} cx={cx} cy={cy} r={3} fill={SUBJECT_COLORS[selectedSubject] || "var(--chart-1)"} />;
                       }}
                       activeDot={{ r: 5 }}
                       name={selectedSubject}
                     />
                   ) : (
                     <>
-                      {SUBJECTS.map((subject, i) => (
+                      {SUBJECTS.map((subject) => (
                         <Line
                           key={subject}
                           type="monotone"
                           dataKey={subject}
-                          stroke={CHART_COLORS[subject] || `var(--chart-${i + 1})`}
+                          stroke={SUBJECT_COLORS[subject] || "var(--muted-foreground)"}
                           strokeWidth={2}
                           dot={(props: { cx?: number; cy?: number; index: number; payload: Record<string, unknown> }) => {
                             const { cx = 0, cy = 0, index, payload } = props;
-                            const color = CHART_COLORS[subject] || `var(--chart-${i + 1})`;
+                            const color = SUBJECT_COLORS[subject] || "var(--muted-foreground)";
                             if (payload[subject] === undefined) return <g key={`dot-${index}`} />;
                             const mrate = payload[`_mrate_${subject}`] as string;
                             if (payload[`_strike_${subject}`]) {
                               const s = 4;
                               return (
                                 <g key={`dot-${index}`}>
-                                  <line x1={cx - s} y1={cy - s} x2={cx + s} y2={cy + s} stroke="oklch(0.637 0.237 25.331)" strokeWidth={2.5} strokeLinecap="round" />
-                                  <line x1={cx + s} y1={cy - s} x2={cx - s} y2={cy + s} stroke="oklch(0.637 0.237 25.331)" strokeWidth={2.5} strokeLinecap="round" />
+                                  <line x1={cx - s} y1={cy - s} x2={cx + s} y2={cy + s} stroke="var(--destructive)" strokeWidth={2.5} strokeLinecap="round" />
+                                  <line x1={cx + s} y1={cy - s} x2={cx - s} y2={cy + s} stroke="var(--destructive)" strokeWidth={2.5} strokeLinecap="round" />
                                 </g>
                               );
                             } else if (mrate === 'bonus') {
-                              return <polygon key={`dot-${index}`} points={`${cx},${cy - 5} ${cx + 4.5},${cy + 3} ${cx - 4.5},${cy + 3}`} fill="oklch(0.65 0.2 145)" />;
+                              return <polygon key={`dot-${index}`} points={`${cx},${cy - 5} ${cx + 4.5},${cy + 3} ${cx - 4.5},${cy + 3}`} fill="var(--primary)" />;
                             } else if (mrate === 'penalty') {
-                              return <polygon key={`dot-${index}`} points={`${cx},${cy + 5} ${cx + 4.5},${cy - 3} ${cx - 4.5},${cy - 3}`} fill="oklch(0.55 0.22 25)" />;
+                              return <polygon key={`dot-${index}`} points={`${cx},${cy + 5} ${cx + 4.5},${cy - 3} ${cx - 4.5},${cy - 3}`} fill="var(--destructive)" />;
                             } else if (mrate === 'unrated') {
-                              return <rect key={`dot-${index}`} x={cx - 3.5} y={cy - 3.5} width={7} height={7} rx={1} fill="oklch(0.6 0.05 280)" />;
+                              return <rect key={`dot-${index}`} x={cx - 3.5} y={cy - 3.5} width={7} height={7} rx={1} fill="var(--muted-foreground)" />;
                             }
                             return <circle key={`dot-${index}`} cx={cx} cy={cy} r={3} fill={color} />;
                           }}
@@ -542,14 +539,17 @@ export default function RecordsPage() {
                       {isExpanded && (
                         <div className="divide-y divide-border/50">
                           {monthRecords.map((r) => {
-                            const colors = SUBJECT_COLORS[r.subject];
+                            const subjectColor = SUBJECT_COLORS[r.subject];
                             return (
                               <div
                                 key={r.id}
                                 className="px-4 py-2.5 flex items-center justify-between gap-2"
                               >
                                 <div className="flex items-center gap-2 min-w-0">
-                                  <span className={`inline-flex items-center rounded-sm px-1.5 py-0.5 text-[10px] font-medium ${colors ? `${colors.bg} ${colors.text}` : "bg-muted text-muted-foreground"}`}>
+                                  <span className="inline-flex items-center gap-1 rounded-sm bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground/80">
+                                    {subjectColor && (
+                                      <span className="size-1.5 rounded-full shrink-0" style={{ backgroundColor: subjectColor }} />
+                                    )}
                                     {r.subject}
                                   </span>
                                   <span className="text-xs truncate">
@@ -559,13 +559,13 @@ export default function RecordsPage() {
                                     <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">大考</Badge>
                                   )}
                                   {r.event_type === 'major_exam' && r.major_exam_rating === 'bonus' && (
-                                    <Badge className="text-[9px] px-1 py-0 h-4 bg-emerald-500/15 text-emerald-600 border border-emerald-500/30">▲ +¥25</Badge>
+                                    <Badge className="text-[9px] px-1 py-0 h-4 bg-primary/15 text-primary border border-primary/30">▲ +¥25</Badge>
                                   )}
                                   {r.event_type === 'major_exam' && r.major_exam_rating === 'penalty' && (
                                     <Badge className="text-[9px] px-1 py-0 h-4 bg-destructive/15 text-destructive border border-destructive/30">▼ −25</Badge>
                                   )}
                                   {r.event_type === 'major_exam' && r.major_exam_rating == null && (
-                                    <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-orange-400/50 text-orange-500">待评</Badge>
+                                    <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-amber-500/40 text-amber-600 dark:text-amber-400">待评</Badge>
                                   )}
                                   {isStrike(r) && (
                                     <Badge variant="destructive" className="text-[9px] px-1 py-0 h-4">扣分</Badge>
@@ -577,7 +577,7 @@ export default function RecordsPage() {
                                     <span className={`font-mono text-sm font-bold px-1.5 py-0.5 rounded ${
                                       Number(r.score) === 0
                                         ? 'text-destructive bg-destructive/10'
-                                        : 'text-emerald-500 bg-emerald-500/10'
+                                        : 'text-primary bg-primary/10'
                                     }`}>
                                       {Number(r.score) === 0 ? 'F' : 'P'}
                                     </span>
@@ -656,9 +656,9 @@ import type { HabitLog } from "@/lib/types";
 
 const RING_SIZE = 40;
 const RING_STROKE = 5;
-const EXERCISE_COLOR = "oklch(0.85 0.25 145)"; // cyber green
-const READING_COLOR = "oklch(0.7 0.25 290)";   // purple (secondary)
-const EMPTY_COLOR = "oklch(0.35 0.02 280)";    // visible gray
+const EXERCISE_COLOR = "var(--primary)";   // green, same as the quest cards
+const READING_COLOR = "var(--chart-5)";    // violet, same as the reading quest accent
+const EMPTY_COLOR = "var(--border)";       // visible gray
 
 function HabitRing({ exercise, reading, label, isFuture }: {
   exercise: boolean;

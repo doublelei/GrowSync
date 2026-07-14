@@ -38,15 +38,10 @@ export function HomeClient({ isParent }: { isParent: boolean }) {
 
   if (isLoading || !data) {
     return (
-      <div className="max-w-md mx-auto w-full h-[100dvh] bg-background flex flex-col items-center justify-center border-r border-l border-border/30 hud-loading">
-        <div className="relative">
-          <div className="size-16 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="size-2 rounded-full bg-primary animate-glow-pulse" />
-          </div>
-        </div>
-        <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.3em] text-primary/50 animate-pulse">
-          Syncing
+      <div className="max-w-md mx-auto w-full h-[100dvh] bg-background flex flex-col items-center justify-center border-r border-l border-border/30">
+        <div className="size-16 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+        <p className="mt-6 text-xs text-muted-foreground animate-pulse">
+          加载中…
         </p>
       </div>
     );
@@ -60,14 +55,11 @@ export function HomeClient({ isParent }: { isParent: boolean }) {
     : { start: '', end: '', week: 1 };
 
   return (
-    <div className="max-w-md mx-auto w-full flex flex-col h-full bg-background border-r border-l border-border/30 relative noise scanlines">
-      {/* Top gradient accent */}
-      <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
-
-      <header className="px-5 py-4 flex items-center justify-between z-10 sticky top-0 bg-background/80 backdrop-blur-md border-b border-border/40">
+    <div className="max-w-md mx-auto w-full flex flex-col h-full bg-background border-r border-l border-border/30 relative">
+      <header className="px-5 py-4 flex items-center justify-between z-10 sticky top-0 bg-background/90 backdrop-blur-md border-b border-border/40">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <span className="text-primary text-glow">G</span>
+          <h1 className="text-xl font-bold tracking-tight text-foreground">
+            <span className="text-primary">G</span>
             <span className="text-foreground/90">rowSync</span>
           </h1>
           <div className="flex items-center gap-2 mt-1">
@@ -96,13 +88,13 @@ export function HomeClient({ isParent }: { isParent: boolean }) {
         </div>
         <div className="flex items-center gap-3">
           <AuthLock isParent={isParent} />
-          <Link href="/rules" className="text-muted-foreground hover:text-primary transition-all hover:drop-shadow-[0_0_6px_oklch(0.82_0.22_155/0.4)]" aria-label="游戏规则">
+          <Link href="/rules" className="text-muted-foreground hover:text-primary transition-colors" aria-label="游戏规则">
             <HelpCircle className="size-[18px]" />
           </Link>
-          <Link href="/records" className="text-muted-foreground hover:text-primary transition-all hover:drop-shadow-[0_0_6px_oklch(0.82_0.22_155/0.4)]" aria-label="学业档案">
+          <Link href="/records" className="text-muted-foreground hover:text-primary transition-colors" aria-label="学业档案">
             <BookOpen className="size-[18px]" />
           </Link>
-          <p className="text-[10px] text-muted-foreground font-mono tracking-wide">
+          <p className="text-[10px] text-muted-foreground tracking-wide">
             {playerData.name}
           </p>
         </div>
