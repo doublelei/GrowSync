@@ -54,7 +54,7 @@ export function DashboardTab({ playerData }: { playerData: PlayerData }) {
                 </button>
               </span>
             </div>
-            <div className="text-xl font-bold font-mono text-primary">
+            <div className={`text-xl font-bold font-mono ${playerData.weeklyPoolEarned < 0 ? "text-destructive" : "text-primary"}`}>
               &yen;{playerData.weeklyPoolEarned}
               <span className="text-xs text-muted-foreground font-normal ml-1.5">/ &yen;{playerData.weeklyPoolTotal}</span>
             </div>

@@ -58,7 +58,7 @@ export function HomeClient({ isParent }: { isParent: boolean }) {
     <div className="max-w-md mx-auto w-full flex flex-col h-full bg-background border-r border-l border-border/30 relative">
       <header className="px-5 py-4 flex items-center justify-between z-10 sticky top-0 bg-background/90 backdrop-blur-md border-b border-border/40">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+          <h1 className="text-xl font-bold tracking-tight text-foreground">
             <span className="text-primary">G</span>
             <span className="text-foreground/90">rowSync</span>
           </h1>
